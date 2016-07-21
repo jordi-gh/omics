@@ -27,3 +27,27 @@ GeoACouch <- function(objGEO,nom) {
   return (uid)
 }
 
+#Mirem si tenim un fitxer a CouchDB
+#Taula indica la taula (gpl,gds..) on hem de buscar
+#uidnom es un named list on podem tenir qualsevol dels dos valors(nom,uid). 
+buscaACouch <- function(taula,uidnom) {
+  #Connectar a BD SQLite
+  db <- dbConnect(SQLite(), 'D:\\Master\\TFM\\R\\ShinyApp\\Test.sqlite')
+  uid = uidnom[['uid']]
+  nom = uidnom[['nom']]
+  if ((is.null(uid))&&(is.null(nom))){ 
+    return(false)
+  }
+  sql = paste('SELECT * FROM',taula,sep=' ')
+  if (!is.null(uid)) {
+    sql = paste(paste(paste(sql,'WHERE uid="',sep=' '),uid,sep=''),'"',sep='')
+  } else {
+    sql = paste(paste(paste(sql,'WHERE name="',sep=' '),nom,sep=''),'"',sep='')
+  }
+  res = dbGetQuery(db, sql)
+  if (nrow(res)>0){
+    return(true)
+  } else {
+    return(false)
+  }
+}
