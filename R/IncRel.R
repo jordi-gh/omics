@@ -15,14 +15,18 @@ guardaFitxer <- function(objGEO,filename,path) {
        'GDS'={tablename='gds'},
        stop('Invalid GEO Object')
   )       
-  sql = paste('SELECT * FROM ',tablename,sep='')
-  sql = paste(paste(paste(sql,' WHERE name = "',sep=''),name,sep=''),'"',sep='')
-  res = dbGetQuery(db, sql)
-  #Si ja el tenim retornem uid 
-  if (nrow(res)>0){
-    uid=res$uid
-    #message('TROBAT')
-    return(uid)
+#   sql = paste('SELECT * FROM ',tablename,sep='')
+#   sql = paste(paste(paste(sql,' WHERE name = "',sep=''),name,sep=''),'"',sep='')
+#   res = dbGetQuery(db, sql)
+#   #Si ja el tenim retornem uid 
+#   if (nrow(res)>0){
+#     uid=res$uid
+#     #message('TROBAT')
+#     return(uid)
+#   }
+  res=buscaAMetadades(tablename,list(nom=name))
+  if (typeof(res)=='list'){
+      return(res$uid)
   }
   ## Carregar objecte i segons classe posem info general del fitxer a taula del model relacional que correspongui
   if (class(objGEO)=='GSM'){
@@ -78,4 +82,32 @@ guardaFitxer <- function(objGEO,filename,path) {
     dbSendPreparedQuery(db, sql, bind.data = valors)
   }
   return(uid)
+}
+
+#Mirem si tenim un fitxer descarregat buscant a metadades SQLite
+#Taula indica la taula (gpl,gds..) on hem de buscar
+#uidnom es un named list on podem tenir qualsevol dels dos valors(nom,uid). 
+buscaAMetadades <- function(taula,uidnom) {
+  #Connectar a BD SQLite
+  db <- dbConnect(SQLite(), 'D:\\Master\\TFM\\R\\ShinyApp\\Test.sqlite')
+  uid = uidnom[['uid']]
+  nom = uidnom[['nom']]
+  if ((is.null(uid))&&(is.null(nom))){ 
+    return(FALSE)
+  }
+  sql = paste('SELECT * FROM',taula,sep=' ')
+  if (!is.null(uid)) {
+    sql = paste(paste(paste(sql,'WHERE uid="',sep=' '),uid,sep=''),'"',sep='')
+  } else {
+    sql = paste(paste(paste(sql,'WHERE name="',sep=' '),nom,sep=''),'"',sep='')
+  }
+  res = dbGetQuery(db, sql)
+  if (nrow(res)>0){
+    uid=res$uid[[1]]
+    nom=res$name[[1]]
+    return(list(uid=uid,nom=nom))
+  } else {  
+    return(FALSE)
+  }
+  
 }

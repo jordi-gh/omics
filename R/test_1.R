@@ -57,4 +57,10 @@ getURL(paste("http://localhost:5984/geodb/","12345",sep=""),
        httpheader=c('Content-Type'='application/json'),
        postfields='{\"couchdb\":\"Welcome\",\"version\":\"1.0.1\"}')
 
+source('D:\\Master\\TFM\\dev\\R\\IncCouch.R')
 
+res=buscaAMetadades('gsm',list(nom='GSM1897275'))
+
+if (!identical(res, FALSE)){
+  message(res$uid)
+}
