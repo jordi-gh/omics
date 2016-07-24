@@ -9,7 +9,7 @@ library(GEOmetadb)
 library(couchDB)
 library(DT)
 library(RSQLite)
-source('D:\\Master\\TFM\\R\\ShinyApp\\IncRel.R')
+source('D:\\Master\\TFM\\dev\\R\\IncRel.R')
 
 options(shiny.maxRequestSize=500*1024^2)
 
