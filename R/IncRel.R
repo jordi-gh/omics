@@ -1,7 +1,7 @@
 library(GEOquery)
 library(GEOmetadb)
 library(RSQLite)
-source('D:\\Master\\TFM\\R\\ShinyApp\\IncCouch.R')
+source('D:\\Master\\TFM\\dev\\R\\IncCouch.R')
 
 db <- dbConnect(SQLite(), 'D:\\Master\\TFM\\R\\ShinyApp\\Test.sqlite')
 
