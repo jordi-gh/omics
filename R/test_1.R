@@ -48,7 +48,7 @@ if (class(objGEO)=='GSM'){
 
 
 objGEO <- getGEO(filename="D:\\Master\\TFM\\Dades\\ICO\\samples\\GSM1897275.soft",GSEMatrix=false)
-objGEO <- getGEO(filename="D:\\Master\\TFM\\Dades\\Mostres\\GSM320590.soft",GSEMatrix=false)
+objGEO2 <- getGEO(filename="D:\\Master\\TFM\\Dades\\Mostres\\GSM320590.soft",GSEMatrix=false)
 
 taula=Table(objGEO)
 # Insert a CouchDB
@@ -64,3 +64,12 @@ res=buscaAMetadades('gsm',list(nom='GSM1897275'))
 if (!identical(res, FALSE)){
   message(res$uid)
 }
+
+#Test llegir document 
+
+cdb$id <- '5797b71009ba7e5c96a2e8dcd400394a'
+cdb$id <- '5797b71009ba7e5c96a2e8dcd4004915'
+cdb <- cdbGetDoc(cdb)
+reg=cdb$res
+
+
