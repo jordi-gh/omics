@@ -53,7 +53,8 @@ GeoACouch <- function(objGEO,nom){
   #Per saber si un objecte s'ha modificat després de fer serialize/unserialize podem utilitzar
   # all.equal(objGEO_orig,objGEO_recuperat) i hauria de donar TRUE
   #Convertim metadades a JSON per poder interrogar valors sense recuperar objecte
-  metadades<-jsonlite::serializeJSON(Meta(objGEO))  
+  #Utilitzem conversió estàndar, ja que serializeJSON separa attributes de valors (pensat per serialitzar objectes)
+  metadades<-toJSON(Meta(objGEO))
   #Convertim objecte sencer a JSON per recuperar-lo igual
   jsonobj<-jsonlite::serializeJSON(objGEO)
    #Si és un GSE no té taula associada i té dues llistes (GPL i GSM)
@@ -94,3 +95,10 @@ CouchAGeo <- function(uid){
 
 }
 
+EsborraDoc <- function(uid){
+  cdb <- iniGeoDB()
+  cdb$id <- uid
+  cdb <- cdbDeleteDoc(cdb)
+  info<-cdb$res
+  return(info)
+}

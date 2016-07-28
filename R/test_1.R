@@ -73,3 +73,7 @@ cdb <- cdbGetDoc(cdb)
 reg=cdb$res
 
 
+#Test Esborrar document
+cdb <- iniGeoDB()
+cdb$id <- '_design/example'
+cdb <- cdbDeleteDoc(cdb)
