@@ -1,1 +1,3 @@
-dbNCBI/
+R/dbNCBI/*
+R/BD/*
+Test.sqlite

@@ -1,7 +1,7 @@
 library(RSQLite)
 
-db <- dbConnect(SQLite(), 
-                'D:\\Master\\TFM\\R\\ShinyApp\\Test.sqlite')
+dir = '/home/daniel/Documentos/màster del universo/ICO/omics/R'
+db <- dbConnect(SQLite(), paste(dir, '/Test.sqlite', sep=""))
 
 dbSendQuery(conn = db,
             "CREATE TABLE gsm
