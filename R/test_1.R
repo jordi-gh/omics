@@ -58,3 +58,65 @@ getURL(paste("http://localhost:5984/geodb/","12345",sep=""),
        postfields='{\"couchdb\":\"Welcome\",\"version\":\"1.0.1\"}')
 
 
+
+
+source('ConfigLocal.R')
+source('C:\\Jordi\\Master\\TFM\\R\\ConfigLocal.R')
+source(file.path('C:','Jordi','Master','TFM','R','ConfigLocal.R'))
+
+a<-source('ConfigLocal.R')
+a
+
+source(paste(R_dir, 'IncRel.R', sep=path_sep))
+source(file.path(R_dir,'IncRel.R'))
+
+source(file.path(dirname(sys.frame(1)$ofile),'ConfigLocal.R'))
+source(file.path('.','ConfigLocal.R'))
+source('ConfigLocal.R')
+
+wd <- setwd(".")
+setwd(wd)
+
+getwd()
+source('./ConfigLocal.R',local = TRUE)
+
+frame_files <- lapply(sys.frames(), function(x) x$ofile)
+frame_files <- Filter(Negate(is.null), frame_files)
+PATH <- dirname(frame_files[[length(frame_files)]])
+frame_files
+
+
+
+LocationOfThisScript = function() # Function LocationOfThisScript returns the location of this .R script (may be needed to source other files in same dir)
+{
+  this.file = NULL
+  # This file may be 'sourced'
+  for (i in -(1:sys.nframe())) {
+    if (identical(sys.function(i), base::source)) this.file = (normalizePath(sys.frame(i)$ofile))
+  }
+  
+  if (!is.null(this.file)) return(dirname(this.file))
+  
+  # But it may also be called from the command line
+  cmd.args = commandArgs(trailingOnly = FALSE)
+  cmd.args.trailing = commandArgs(trailingOnly = TRUE)
+  cmd.args = cmd.args[seq.int(from=1, length.out=length(cmd.args) - length(cmd.args.trailing))]
+  res = gsub("^(?:--file=(.*)|.*)$", "\\1", cmd.args)
+  
+  # If multiple --file arguments are given, R uses the last one
+  res = tail(res[res != ""], 1)
+  if (0 < length(res)) return(dirname(res))
+  
+  # Both are not the case. Maybe we are in an R GUI?
+  return(NULL)
+}
+current.dir = LocationOfThisScript()
+
+dir <- dirname(parent.frame(2)$ofile)
+setwd(dir)
+
+
+utils::getSrcDirectory()
+dir1<-getSrcDirectory()[1]
+
+#runApp(file.path('C:','Jordi','Master','TFM','R'))

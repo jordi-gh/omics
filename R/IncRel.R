@@ -2,10 +2,11 @@ library(GEOquery)
 library(GEOmetadb)
 library(RSQLite)
 
-dir = '/home/daniel/Documentos/màster del universo/ICO/omics/R'
-source(paste(dir, '/IncCouch.R', sep=""))
 
-db <- dbConnect(SQLite(), paste(dir, '/Test.sqlite', sep=""))
+source(file.path(gb_Rdir, 'IncCouch.R'))
+
+SQLFile = file.path(gb_Rdir, 'metadata.sqlite')
+db <- dbConnect(SQLite(), SQLFile)
 
 guardaFitxer <- function(objGEO,filename,path) {
   #Mirem si tenim el fitxer a la BD JSON amb una query a la BD relacional de metadades 

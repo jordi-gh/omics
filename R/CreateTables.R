@@ -1,7 +1,9 @@
 library(RSQLite)
+## Carregar variables d'entorn local
+source('ConfigLocal.R')
 
-dir = '/home/daniel/Documentos/màster del universo/ICO/omics/R'
-db <- dbConnect(SQLite(), paste(dir, '/Test.sqlite', sep=""))
+SQLFile = file.path(gb_Rdir, 'metadata.sqlite')
+db <- dbConnect(SQLite(), SQLFile)
 
 dbSendQuery(conn = db,
             "CREATE TABLE gsm
@@ -45,3 +47,4 @@ dbSendQuery(conn = db,
             ")
 
 dbDisconnect(db)
+
