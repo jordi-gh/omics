@@ -1,3 +1,4 @@
 R/dbNCBI/*
 R/BD/*
-Test.sqlite
+metadata.sqlite
+R/ConfigLocal.R
