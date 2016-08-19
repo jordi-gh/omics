@@ -2,3 +2,5 @@ R/dbNCBI/*
 R/BD/*
 metadata.sqlite
 R/ConfigLocal.R
+R/GEOmetadb.sqlite
+R/test_1.R

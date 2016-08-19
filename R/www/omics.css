@@ -3,7 +3,7 @@ body {
 }
 
 .navbar{
-  background-image: url('img/logoICO.png');
+  /*background-image: url('img/logoICO.png');*/
   background-repeat: no-repeat;
   background-position: 5px 0px;
 }
