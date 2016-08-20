@@ -1,13 +1,13 @@
 library(RSQLite)
 ## Carregar variables d'entorn local
 source('ConfigLocal.R')
+source(file.path(gb_Rdir, 'IncRel.R'))
 
-SQLFile = file.path(gb_Rdir, 'metadata.sqlite')
-db <- dbConnect(SQLite(), SQLFile)
+db <- getMetadataDB()
 
 dbSendQuery(conn = db,
             "CREATE TABLE gsm
-            (uid TEXT,
+            (uid TEXT PRIMARY KEY,
              name TEXT,
              down INT,
              path TEXT,
@@ -17,7 +17,7 @@ dbSendQuery(conn = db,
             ")
 dbSendQuery(conn = db,
             "CREATE TABLE gse
-            (uid TEXT,
+            (uid TEXT PRIMARY KEY,
              name TEXT,
              down INT,
              path TEXT,
@@ -27,7 +27,7 @@ dbSendQuery(conn = db,
             ")
 dbSendQuery(conn = db,
             "CREATE TABLE gpl
-            (uid TEXT,
+            (uid TEXT PRIMARY KEY,
             name TEXT,
             down INT,
             path TEXT,
@@ -37,7 +37,7 @@ dbSendQuery(conn = db,
             ")
 dbSendQuery(conn = db,
             "CREATE TABLE gds
-            (uid TEXT,
+            (uid TEXT PRIMARY KEY,
             name TEXT,
             down INT,
             path TEXT,
@@ -46,5 +46,41 @@ dbSendQuery(conn = db,
             )
             ")
 
+## Crear taules d'usuaris, grups i rols
+dbSendQuery(conn = db,
+            "CREATE TABLE rols
+            (id INT PRIMARY KEY,
+            nomrol TEXT,
+            descripcio TEXT
+            )
+            ")
+dbSendQuery(conn = db,
+            "CREATE TABLE usuari_grup
+            (userid INT PRIMARY KEY,
+            grupid TEXT
+            )
+            ")
+dbSendQuery(conn = db,
+            "CREATE TABLE usuaris
+            (id INT PRIMARY KEY,
+            username TEXT,
+            pwd TEXT,
+            nom TEXT,
+            cognom1 TEXT,
+            cognom2 TEXT,
+            mail TEXT,
+            lastlog TEXT,
+            rolid INT,
+            CONSTRAINT username_unique UNIQUE (username)
+            FOREIGN KEY (rolid) REFERENCES rols(id)
+            )
+            ")
+dbSendQuery(conn = db,
+            "CREATE TABLE grups
+            (id INT PRIMARY KEY,
+            nomgrup TEXT,
+            descripcio TEXT
+            )
+            ")
 dbDisconnect(db)
 
