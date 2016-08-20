@@ -55,7 +55,7 @@ shinyServer(function(input, output) {
         
         navbarPage(
           
-          div(icon("fa fa-user"), input$.username),
+          div(actionLink("logout", "Logout"),icon("fa fa-user"), input$.username),
           
           windowTitle="Omics-in-Cloud",
           
@@ -234,6 +234,14 @@ shinyServer(function(input, output) {
     
     paste("selected: ",input$dataset," - ",input$platform)
     
+  })
+  
+  # ---------------------------------------------------------------------
+  # Logout
+  # ---------------------------------------------------------------------
+  observeEvent(input$logout , {
+    USER$Logged <- FALSE
+    USER$pass <- ""
   })
   
 })
