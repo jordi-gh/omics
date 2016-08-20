@@ -35,12 +35,12 @@ shinyServer(function(input, output) {
   output$app = renderUI(
     if (!isTRUE(USER$Logged)) {
       fluidRow(column(width=4, offset = 4,
-        wellPanel(id = "login",
-          textInput(".username", "Username:"),
-          passwordInput(".password", "Password:"),
-          div(actionButton(".login", "Log in"), style="text-align: center;")
-        ),
-        textOutput("message")
+                      wellPanel(id = "login",
+                                textInput(".username", "Username:"),
+                                passwordInput(".password", "Password:"),
+                                div(actionButton(".login", "Log in"), style="text-align: center;")
+                      ),
+                      textOutput("message")
       ))
     } else {
       
@@ -55,7 +55,7 @@ shinyServer(function(input, output) {
         
         navbarPage(
           
-          div(icon("fa fa-user"), input$.username),
+          div(actionLink("logout", "Logout"),icon("fa fa-user"), input$.username),
           
           windowTitle="Omics-in-Cloud",
           
@@ -140,7 +140,7 @@ shinyServer(function(input, output) {
       # FIN INTERFICIE
       #----------------------------------------------
     }
-
+    
   )
   
   #---------------------------------------------------------------------
@@ -240,6 +240,7 @@ shinyServer(function(input, output) {
     
   })
   
+  
   output$descripcionsample <- renderText({
     if (is.null(input$sample) || input$sample == "Select DataSet Sample"){
       return()
@@ -258,5 +259,15 @@ shinyServer(function(input, output) {
     
     HTML(paste(str0, str1, str2, str3, str4, sep = '<br/>'))
   })
+    
+    # ---------------------------------------------------------------------
+    # Logout
+    # ---------------------------------------------------------------------
+    observeEvent(input$logout , {
+      USER$Logged <- FALSE
+      USER$pass <- ""
+    })
   
 })
+    
+    
