@@ -9,13 +9,23 @@ library(couchDB)
 library(DT)
 library(RSQLite)
 
-# el usuario texto normal, el password esta en md5 p.ej. la b -> 92eb5ffee6ae2fec3ad71c777531578f
-credentials <- list("rpena" = "92eb5ffee6ae2fec3ad71c777531578f","dmendez" = "92eb5ffee6ae2fec3ad71c777531578f","jtorresz" = "92eb5ffee6ae2fec3ad71c777531578f")
-
 ## Carregar variables d'entorn local
 source('ConfigLocal.R')
 source(file.path(gb_Rdir, 'IncRel.R'))
 options(shiny.maxRequestSize=500*1024^2)
+
+# Leer lista de usuarios i pwd 
+db <- getMetadataDB()
+sql<-"SELECT * FROM usuaris"
+res<-getQuery(db,sql)
+#Convertim de dataframe a 'named list' amb credencials (nom1=pwd1,nom2=pwd2...)
+credentials<-list()
+i <- 1
+for (nom in res$username){
+  credentials[[nom]] <- res$pwd[i]
+  i <- i+1
+}
+
 
 shinyServer(function(input, output) {
   
