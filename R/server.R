@@ -9,13 +9,23 @@ library(couchDB)
 library(DT)
 library(RSQLite)
 
-# el usuario texto normal, el password esta en md5 p.ej. la b -> 92eb5ffee6ae2fec3ad71c777531578f
-credentials <- list("rpena" = "92eb5ffee6ae2fec3ad71c777531578f","dmendez" = "92eb5ffee6ae2fec3ad71c777531578f","jtorresz" = "92eb5ffee6ae2fec3ad71c777531578f")
-
 ## Carregar variables d'entorn local
 source('ConfigLocal.R')
 source(file.path(gb_Rdir, 'IncRel.R'))
 options(shiny.maxRequestSize=500*1024^2)
+
+# Leer lista de usuarios i pwd 
+db <- getMetadataDB()
+sql<-"SELECT * FROM usuaris"
+res<-getQuery(db,sql)
+#Convertim de dataframe a 'named list' amb credencials (nom1=pwd1,nom2=pwd2...)
+credentials<-list()
+i <- 1
+for (nom in res$username){
+  credentials[[nom]] <- res$pwd[i]
+  i <- i+1
+}
+
 
 shinyServer(function(input, output) {
   
@@ -35,12 +45,12 @@ shinyServer(function(input, output) {
   output$app = renderUI(
     if (!isTRUE(USER$Logged)) {
       fluidRow(column(width=4, offset = 4,
-        wellPanel(id = "login",
-          textInput(".username", "Username:"),
-          passwordInput(".password", "Password:"),
-          div(actionButton(".login", "Log in"), style="text-align: center;")
-        ),
-        textOutput("message")
+                      wellPanel(id = "login",
+                                textInput(".username", "Username:"),
+                                passwordInput(".password", "Password:"),
+                                div(actionButton(".login", "Log in"), style="text-align: center;")
+                      ),
+                      textOutput("message")
       ))
     } else {
       
@@ -78,7 +88,7 @@ shinyServer(function(input, output) {
                      tabPanel("Other data", id = "otherdata",
                               sidebarLayout(
                                 sidebarPanel(
-                                  textInput("searchexperiment", label = h3("Search"), value = "Enter text..."),
+                                  textInput("searchexperiment", label = h3("Search GPL"), value = "Enter text..."),
                                   # select dataset
                                   uiOutput("choose_dataset"),
                                   # select platform
@@ -86,7 +96,8 @@ shinyServer(function(input, output) {
                                 ),
                                 
                                 mainPanel(
-                                  textOutput("salidaprueba")
+                                  textOutput("salidaprueba"),
+                                  htmlOutput("descripcionsample")
                                 )
                               )
                      )
@@ -139,7 +150,7 @@ shinyServer(function(input, output) {
       # FIN INTERFICIE
       #----------------------------------------------
     }
-
+    
   )
   
   #---------------------------------------------------------------------
@@ -197,17 +208,17 @@ shinyServer(function(input, output) {
       if(!file.exists(gb_geoSQLFile)) { getSQLiteFile() }
       con <- dbConnect(SQLite(),gb_geoSQLFile)
       sql <- paste("SELECT DISTINCT gse.gse",
-                   "FROM",
+                   " FROM",
                    " gsm JOIN gse_gsm ON gsm.gsm=gse_gsm.gsm",
                    " JOIN gse ON gse_gsm.gse=gse.gse",
                    " JOIN gse_gpl ON gse_gpl.gse=gse.gse",
                    " JOIN gpl ON gse_gpl.gpl=gpl.gpl",
-                   "WHERE",
-                   " gse.title LIKE '%",input$searchexperiment,"%'", sep=" ")
+                   " WHERE",
+                   " gpl.gpl LIKE '%",input$searchexperiment,"%' LIMIT 10", sep="")
       rs <- dbGetQuery(con,sql)
       data_sets <- as.matrix(rs)
       dbDisconnect(con)
-      selectInput("dataset", "GSE", c('Select DataSet',as.list(data_sets)))
+      selectInput("dataset", "GSE", c('Select DataSet Serie',as.list(data_sets)))
     }
     
   })
@@ -215,33 +226,58 @@ shinyServer(function(input, output) {
   # Select inicial de Platform (una vez seleccionado DataSets)
   output$choose_platform <- renderUI({
     
-    if (is.null(input$dataset) || input$dataset == "Select DataSet"){
+    if (is.null(input$dataset) || input$dataset == "Select DataSet Serie"){
       return()
     }
     else{
       if(!file.exists(gb_geoSQLFile)) { getSQLiteFile() }
       con <- dbConnect(SQLite(),gb_geoSQLFile)
-      sql <- paste("SELECT gds FROM gds WHERE gse = '",input$dataset,"'", sep="")
+      sql <- paste("SELECT DISTINCT gsm.gsm",
+                   " FROM gsm",
+                   " JOIN gse_gsm ON gsm.gsm=gse_gsm.gsm",
+                   " WHERE gse_gsm.gse = '",input$dataset,"'", sep="")
       rs <- dbGetQuery(con,sql)
       data_sets <- as.matrix(rs)
       dbDisconnect(con)
-      selectInput("platform", "GDS", c('Select Platform',data_sets))  
+      selectInput("sample", "GSM", c('Select DataSet Sample',data_sets))  
     }
     
   })
   
   output$salidaprueba <- renderText({
     
-    paste("selected: ",input$dataset," - ",input$platform)
+    paste("selected: ",input$searchexperiment," - ",input$dataset," - ",input$sample)
     
   })
   
-  # ---------------------------------------------------------------------
-  # Logout
-  # ---------------------------------------------------------------------
-  observeEvent(input$logout , {
-    USER$Logged <- FALSE
-    USER$pass <- ""
+  
+  output$descripcionsample <- renderText({
+    if (is.null(input$sample) || input$sample == "Select DataSet Sample"){
+      return()
+    }
+    con <- dbConnect(SQLite(),gb_geoSQLFile)
+    sql <- paste("SELECT *",
+                 " FROM gsm",
+                 " WHERE gsm.gsm = '",input$sample,"'", sep="")
+    rs <- dbGetQuery(con,sql)
+    
+    str0 <-"<br/>"
+    str1 <-paste("ID: ",rs$ID)
+    str2 <-paste("Title: ",rs$title)
+    str3 <-paste("Status: ",rs$status)
+    str4 <-paste("Date: ",rs$submission_date)
+    
+    HTML(paste(str0, str1, str2, str3, str4, sep = '<br/>'))
   })
+    
+    # ---------------------------------------------------------------------
+    # Logout
+    # ---------------------------------------------------------------------
+    observeEvent(input$logout , {
+      USER$Logged <- FALSE
+      USER$pass <- ""
+    })
   
 })
+    
+    

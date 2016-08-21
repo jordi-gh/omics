@@ -119,4 +119,19 @@ setwd(dir)
 utils::getSrcDirectory()
 dir1<-getSrcDirectory()[1]
 
-#runApp(file.path('C:','Jordi','Master','TFM','R'))
+
+source(file.path(gb_Rdir, 'IncRel.R'))
+db <- getMetadataDB()
+sql<-"SELECT * FROM usuaris"
+res<-exeQuery(db,sql)
+credentials1<-list()
+i <- 1
+for (nom in res$username){
+  credentials1[[nom]] <- res$pwd[i]
+  i <- i+1
+}
+
+credentials <- res[,c("username","pwd")]
+list1 <- as.list(credentials)
+
+list2 <- list("rpena" = "92eb5ffee6ae2fec3ad71c777531578f","dmendez" = "92eb5ffee6ae2fec3ad71c777531578f","jtorresz" = "92eb5ffee6ae2fec3ad71c777531578f")

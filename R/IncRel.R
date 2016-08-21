@@ -5,8 +5,12 @@ library(RSQLite)
 
 source(file.path(gb_Rdir, 'IncCouch.R'))
 
-SQLFile = file.path(gb_Rdir, 'metadata.sqlite')
-db <- dbConnect(SQLite(), SQLFile)
+
+getMetadataDB <- function(){
+  SQLFile = file.path(gb_Rdir, 'metadata.sqlite')
+  db <- dbConnect(SQLite(), SQLFile)
+  return(db)
+}
 
 guardaFitxer <- function(objGEO,filename,path) {
   #Mirem si tenim el fitxer a la BD JSON amb una query a la BD relacional de metadades 
@@ -81,4 +85,21 @@ guardaFitxer <- function(objGEO,filename,path) {
     dbSendPreparedQuery(db, sql, bind.data = valors)
   }
   return(uid)
+}
+
+sendQuery <- function(db, comanda){
+  ## Converteixo a UTF-8 les comandes amb enc2utf8. 
+  ## No he trobat com fer-ho per defecte tot i tenir RStudio a UTF-8
+  comanda_utf8 <- enc2utf8(comanda)
+  result <- dbGetQuery(conn = db, comanda_utf8)
+  return(result)
+}
+
+
+getQuery <- function(db, comanda){
+  ## Converteixo a UTF-8 les comandes amb enc2utf8. 
+  ## No he trobat com fer-ho per defecte tot i tenir RStudio a UTF-8
+  comanda_utf8 <- enc2utf8(comanda)
+  result <- dbGetQuery(conn = db, comanda_utf8)
+  return(result)
 }
