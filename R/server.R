@@ -184,12 +184,21 @@ shinyServer(function(input, output) {
   # Upload NCBI
   # ---------------------------------------------------------------------
   output$experiment <- renderDataTable({ 
+    submitExperiment() #Esperamos al submit
+  })
+  
+  submitExperiment <- eventReactive(input$submitexperiment,{ 
     
     if (input$experimentupload!="Enter text..." && input$experimentupload!=""){
       destdir = file.path(gb_Rdir, 'BD')
       
       ExperimentNCBI <- getGEO(input$experimentupload, destdir = destdir)
-      Table(ExperimentNCBI)[,1:2]
+      type <- substr(input$experimentupload, 0, 3)
+      if (type == 'GPL') cols <- c("ID", "Gene Symbol", "ENTREZ_GENE_ID")
+      else if (type == 'GSE') cols <- c("ID_REF")
+      else if (type == 'GSM') cols <- c("ID_REF",	"VALUE")
+      
+      Table(ExperimentNCBI)[,cols]
       
     }
     
