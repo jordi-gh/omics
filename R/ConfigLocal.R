@@ -1,8 +1,6 @@
 ## NO COMITEJAR AQUEST FITXER
-## CONTÉ CONFIGURACIÓ LOCAL
+## CONT? CONFIGURACI? LOCAL
 
 ## Variables globals 
-assign("gb_Rdir", file.path('C:','Jordi','Master','TFM','R'), envir = .GlobalEnv)
+assign("gb_Rdir", file.path('C:','Users','Administrador','Desktop','Master BI&BD','TFM','Omics-in-Cloud App','Omics-in-Cloud','R'), envir = .GlobalEnv)
 assign("gb_geoSQLFile", file.path(gb_Rdir, 'dbNCBI','GEOmetadb.sqlite'), envir = .GlobalEnv)
-
-
