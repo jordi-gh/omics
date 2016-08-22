@@ -223,11 +223,11 @@ shinyServer(function(input, output) {
                    " JOIN gse_gpl ON gse_gpl.gse=gse.gse",
                    " JOIN gpl ON gse_gpl.gpl=gpl.gpl",
                    " WHERE",
-                   " gpl.gpl LIKE '%",input$searchexperiment,"%' LIMIT 10", sep="")
+                   " gpl.gpl LIKE '%",input$searchexperiment,"%'", sep="")
       rs <- dbGetQuery(con,sql)
       data_sets <- as.matrix(rs)
       dbDisconnect(con)
-      selectInput("dataset", "GSE", c('Select DataSet Serie',as.list(data_sets)))
+      selectizeInput("dataset", "GSE", c('Select DataSet Serie',as.list(data_sets)),options = list(maxOptions = 10))
     }
     
   })
