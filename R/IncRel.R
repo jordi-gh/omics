@@ -13,6 +13,7 @@ getMetadataDB <- function(){
 }
 
 guardaFitxer <- function(objGEO,filename,path) {
+  db <- getMetadataDB()
   #Mirem si tenim el fitxer a la BD JSON amb una query a la BD relacional de metadades 
   name=objGEO@header$geo_accession
   switch(toupper(class(objGEO)),
