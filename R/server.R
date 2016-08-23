@@ -199,6 +199,7 @@ shinyServer(function(input, output) {
       if (type == 'GPL') cols <- c("ID", "Gene Symbol", "ENTREZ_GENE_ID")
       else if (type == 'GSE') cols <- c("ID_REF")
       else if (type == 'GSM') cols <- c("ID_REF",	"VALUE")
+      else if (type == 'GDS') cols <- c("ID_REF",	"IDENTIFIER")
       
       Table(ExperimentNCBI)[,cols]
       
