@@ -13,23 +13,12 @@ getMetadataDB <- function(){
 }
 
 guardaFitxer <- function(objGEO,filename,path) {
+  #Carreguem la db
   db <- getMetadataDB()
-  #Mirem si tenim el fitxer a la BD JSON amb una query a la BD relacional de metadades 
   name=objGEO@header$geo_accession
-  switch(toupper(class(objGEO)),
-       'GSM'={tablename='gsm'},
-       'GPL'={tablename='gpl'},
-       'GSE'={tablename='gse'},
-       'GDS'={tablename='gds'},
-       stop('Invalid GEO Object')
-  )       
-  sql = paste('SELECT * FROM ',tablename,sep='')
-  sql = paste(paste(paste(sql,' WHERE name = "',sep=''),name,sep=''),'"',sep='')
-  res = dbGetQuery(db, sql)
-  #Si ja el tenim retornem uid 
-  if (nrow(res)>0){
-    uid=res$uid
-    #message('TROBAT')
+  uid<-existeixFitxer(objGEO,name,db)
+  # Si l'hem trobat no cal afegir-lo
+  if (!is.null(uid)){
     return(uid)
   }
   ## Carregar objecte i segons classe posem info general del fitxer a taula del model relacional que correspongui
@@ -86,6 +75,32 @@ guardaFitxer <- function(objGEO,filename,path) {
     dbSendPreparedQuery(db, sql, bind.data = valors)
   }
   return(uid)
+}
+
+existeixFitxer <- function(objGEO,nom, db){
+  if(missing(db)) {
+    #Carreguem la db
+    db <- getMetadataDB()
+  } 
+  #Mirem si tenim el fitxer a la BD JSON amb una query a la BD relacional de metadades 
+  switch(toupper(class(objGEO)),
+         'GSM'={tablename='gsm'},
+         'GPL'={tablename='gpl'},
+         'GSE'={tablename='gse'},
+         'GDS'={tablename='gds'},
+         stop('Invalid GEO Object')
+  )       
+  sql = paste('SELECT * FROM ',tablename,sep='')
+  sql = paste(paste(paste(sql,' WHERE name = "',sep=''),nom,sep=''),'"',sep='')
+  res = dbGetQuery(db, sql)
+  #Si ja el tenim retornem uid 
+  if (nrow(res)>0){
+    uid=res$uid
+    #message('TROBAT')
+    return(uid)
+  } else {
+    return(NULL)
+  }
 }
 
 sendQuery <- function(db, comanda){

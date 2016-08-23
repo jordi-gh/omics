@@ -135,3 +135,9 @@ credentials <- res[,c("username","pwd")]
 list1 <- as.list(credentials)
 
 list2 <- list("rpena" = "92eb5ffee6ae2fec3ad71c777531578f","dmendez" = "92eb5ffee6ae2fec3ad71c777531578f","jtorresz" = "92eb5ffee6ae2fec3ad71c777531578f")
+
+
+objGEO <- getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GPL226.soft",GSEMatrix=false)
+colnames(Table(objGEO))
+
+

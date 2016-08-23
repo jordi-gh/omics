@@ -91,12 +91,14 @@ shinyServer(function(input, output) {
                                   textInput("searchexperiment", label = h3("Search GPL"), value = "Enter text..."),
                                   # select dataset
                                   uiOutput("choose_dataset"),
-                                  # select platform
-                                  uiOutput("choose_platform")
+                                  # select sample
+                                  uiOutput("choose_sample")
                                 ),
                                 
                                 mainPanel(
                                   textOutput("salidaprueba"),
+                                  htmlOutput("descripcionplatform"),
+                                  htmlOutput("descripcionserie"),
                                   htmlOutput("descripcionsample")
                                 )
                               )
@@ -184,12 +186,22 @@ shinyServer(function(input, output) {
   # Upload NCBI
   # ---------------------------------------------------------------------
   output$experiment <- renderDataTable({ 
+    submitExperiment() #Esperamos al submit
+  })
+  
+  submitExperiment <- eventReactive(input$submitexperiment,{ 
     
     if (input$experimentupload!="Enter text..." && input$experimentupload!=""){
       destdir = file.path(gb_Rdir, 'BD')
       
       ExperimentNCBI <- getGEO(input$experimentupload, destdir = destdir)
-      Table(ExperimentNCBI)[,1:2]
+      type <- substr(input$experimentupload, 0, 3)
+      if (type == 'GPL') cols <- c("ID", "Gene Symbol", "ENTREZ_GENE_ID")
+      else if (type == 'GSE') cols <- c("ID_REF")
+      else if (type == 'GSM') cols <- c("ID_REF",	"VALUE")
+      else if (type == 'GDS') cols <- c("ID_REF",	"IDENTIFIER")
+      
+      Table(ExperimentNCBI)[,cols]
       
     }
     
@@ -202,7 +214,7 @@ shinyServer(function(input, output) {
   output$choose_dataset <- renderUI({
     
     if (is.null(input$searchexperiment) || input$searchexperiment == "Enter text..."){
-      return()
+      selectizeInput("dataset", "GSE", c('Select DataSet Serie',""))
     }
     else{
       if(!file.exists(gb_geoSQLFile)) { getSQLiteFile() }
@@ -214,20 +226,20 @@ shinyServer(function(input, output) {
                    " JOIN gse_gpl ON gse_gpl.gse=gse.gse",
                    " JOIN gpl ON gse_gpl.gpl=gpl.gpl",
                    " WHERE",
-                   " gpl.gpl LIKE '%",input$searchexperiment,"%' LIMIT 10", sep="")
+                   " gpl.gpl LIKE '%",input$searchexperiment,"%'", sep="")
       rs <- dbGetQuery(con,sql)
       data_sets <- as.matrix(rs)
       dbDisconnect(con)
-      selectInput("dataset", "GSE", c('Select DataSet Serie',as.list(data_sets)))
+      selectizeInput("dataset", "GSE", c('Select DataSet Serie',as.list(data_sets)),options = list(maxOptions = 10))
     }
     
   })
   
-  # Select inicial de Platform (una vez seleccionado DataSets)
-  output$choose_platform <- renderUI({
+  # Select inicial de Sample (una vez seleccionado DataSets)
+  output$choose_sample <- renderUI({
     
     if (is.null(input$dataset) || input$dataset == "Select DataSet Serie"){
-      return()
+      selectInput("sample", "GSM", c('Select DataSet Sample',""))
     }
     else{
       if(!file.exists(gb_geoSQLFile)) { getSQLiteFile() }
@@ -239,7 +251,7 @@ shinyServer(function(input, output) {
       rs <- dbGetQuery(con,sql)
       data_sets <- as.matrix(rs)
       dbDisconnect(con)
-      selectInput("sample", "GSM", c('Select DataSet Sample',data_sets))  
+      selectizeInput("sample", "GSM", c('Select DataSet Sample',as.list(data_sets)),options = list(maxOptions = 10))
     }
     
   })
@@ -250,6 +262,46 @@ shinyServer(function(input, output) {
     
   })
   
+  
+  output$descripcionplatform <- renderText({
+    if (is.null(input$searchexperiment) || input$searchexperiment == "Enter text..."){
+      return()
+    }
+    con <- dbConnect(SQLite(),gb_geoSQLFile)
+    sql <- paste("SELECT *",
+                 " FROM gpl",
+                 " WHERE gpl.gpl = '",input$searchexperiment,"'", sep="")
+    rs <- dbGetQuery(con,sql)
+    
+    str0 <-"<br/>"
+    str1 <-paste("GPL: ",rs$gpl)
+    str2 <-paste("ID: ",rs$ID)
+    str3 <-paste("Title: ",rs$title)
+    str4 <-paste("Status: ",rs$status)
+    str5 <-paste("Date: ",rs$submission_date)
+    
+    HTML(paste(str0, str1, str2, str3, str4, str5, sep = '<br/>'))
+  })
+  
+  output$descripcionserie <- renderText({
+    if (is.null(input$dataset) || input$dataset == "Select DataSet Serie"){
+      return()
+    }
+    con <- dbConnect(SQLite(),gb_geoSQLFile)
+    sql <- paste("SELECT *",
+                 " FROM gse",
+                 " WHERE gse.gse = '",input$dataset,"'", sep="")
+    rs <- dbGetQuery(con,sql)
+    
+    str0 <-"<br/>"
+    str1 <-paste("GSE: ",rs$gse)
+    str2 <-paste("ID: ",rs$ID)
+    str3 <-paste("Title: ",rs$title)
+    str4 <-paste("Status: ",rs$status)
+    str5 <-paste("Date: ",rs$submission_date)
+    
+    HTML(paste(str0, str1, str2, str3, str4, str5, sep = '<br/>'))
+  })
   
   output$descripcionsample <- renderText({
     if (is.null(input$sample) || input$sample == "Select DataSet Sample"){
@@ -262,13 +314,17 @@ shinyServer(function(input, output) {
     rs <- dbGetQuery(con,sql)
     
     str0 <-"<br/>"
-    str1 <-paste("ID: ",rs$ID)
-    str2 <-paste("Title: ",rs$title)
-    str3 <-paste("Status: ",rs$status)
-    str4 <-paste("Date: ",rs$submission_date)
+    str1 <-paste("GSM: ",rs$gsm)
+    str2 <-paste("ID: ",rs$ID)
+    str3 <-paste("Title: ",rs$title)
+    str4 <-paste("Status: ",rs$status)
+    str5 <-paste("Date: ",rs$submission_date)
     
-    HTML(paste(str0, str1, str2, str3, str4, sep = '<br/>'))
+    HTML(paste(str0, str1, str2, str3, str4, str5, sep = '<br/>'))
   })
+  # ---------------------------------------------------------------------
+  # FIN Data Catalog NCBI
+  # ---------------------------------------------------------------------
     
     # ---------------------------------------------------------------------
     # Logout
