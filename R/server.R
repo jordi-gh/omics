@@ -8,6 +8,7 @@ library(GEOmetadb)
 library(couchDB)
 library(DT)
 library(RSQLite)
+library(gplots)
 
 ## Carregar variables d'entorn local
 source('ConfigLocal.R')
@@ -136,7 +137,17 @@ shinyServer(function(input, output) {
           tabPanel("Analysis", icon = icon("fa fa-bar-chart"),
                    navlistPanel(
                      "Analysis", widths = c(2, 10),
-                     tabPanel("Anal1", id = "anal1"),
+                     tabPanel("Heatmap GSE", id = "heatmapgse",
+                              sidebarLayout(
+                                sidebarPanel(
+                                  selectizeInput("gseplot", "GSE", c('Select GSE','GSE976'))
+                                ),
+                                mainPanel(
+                                  tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
+                                  plotOutput('heatmapgse')
+                                )
+                              )
+                     ),
                      tabPanel("Anal2", id = "anal2")
                    )
           ),
@@ -161,6 +172,22 @@ shinyServer(function(input, output) {
   #                                                   ------------------
   #---------------------------------------------------------------------
   
+  # ---------------------------------------------------------------------  
+  # Analisis1: Heatmap GSE
+  # --------------------------------------------------------------------- 
+  output$heatmapgse <- renderPlot({
+    
+    if (input$gseplot!="Select GSE" && input$gseplot!=""){
+      destdir = file.path(gb_Rdir, 'BD')
+      gse = getGEO(input$gseplot, destdir = destdir)[[1]]
+      sdN = 3
+      sds = apply(log2(exprs(gse)+0.0001),1,sd)
+      heatmap.2(log2(exprs(gse)+0.0001)[sds>sdN,],trace='none',scale='row')
+    }
+    
+  })
+  
+
   # ---------------------------------------------------------------------  
   # Upload ICO
   # ---------------------------------------------------------------------  
