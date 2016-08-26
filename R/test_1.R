@@ -186,7 +186,7 @@ objGEO <- getGEO("GSE220",GSEMatrix = FALSE)
 objGEO <- getGEO("GSE220",GSEMatrix = TRUE)
 
   
-GSM1 <-getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GSM48681.soft",GSEMatrix=false)
+GSM1 <-getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GSM101.soft",GSEMatrix=false)
 
 GDS1 <-getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GDS100.soft.gz",GSEMatrix=false)
 class(GDS1)
@@ -207,3 +207,16 @@ sdN = 3
 sds = apply(log2(exprs(gse)+0.0001),1,sd)
 library(gplots)
 heatmap.2(log2(exprs(gse)+0.0001)[sds>sdN,],trace='none',scale='row')
+
+# Visualització pollo Dani dels GSE
+objGEO <- getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GSE220.soft.gz",GSEMatrix=FALSE)
+pdExperimentNCBI <- pData(phenoData(objGEO[[1]]))  ##Peta: Error in objGEO[[1]] : this S4 class is not subsettable
+pdExperimentNCBI <- pData(phenoData(objGEO)) ## PEta: unable to find an inherited method for function ‘phenoData’ for signature ‘"GSE"’ 
+
+objGEO <- getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GSE220.soft.gz",GSEMatrix=TRUE)
+pdExperimentNCBI <- pData(phenoData(objGEO[[1]]))  ##Peta: Error in objGEO[[1]] : this S4 class is not subsettable
+
+
+#Problema colnames no existents
+objGEO <- getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GPL1111.soft",GSEMatrix=false)
+colnames(Table(objGEO))
