@@ -4,3 +4,5 @@ metadata.sqlite
 R/ConfigLocal.R
 R/GEOmetadb.sqlite
 R/test_1.R
+R/.RData
+R/.Rhistory

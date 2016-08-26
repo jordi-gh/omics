@@ -135,3 +135,75 @@ credentials <- res[,c("username","pwd")]
 list1 <- as.list(credentials)
 
 list2 <- list("rpena" = "92eb5ffee6ae2fec3ad71c777531578f","dmendez" = "92eb5ffee6ae2fec3ad71c777531578f","jtorresz" = "92eb5ffee6ae2fec3ad71c777531578f")
+
+
+objGEO <- getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GPL226.soft",GSEMatrix=false)
+colnames(Table(objGEO))
+
+#Descarreguem GSE indicant Matrix = False: Ens baixa fitxer associat GPL8300 de 8 Mb
+objGEO <- getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GSE220_series_matrix.txt.gz",GSEMatrix=false)
+colnames(Table(objGEO))
+Meta(objGEO)
+name=objGEO@header$geo_accession
+
+#Descarreguem GSE deixant valor per defecte Matrix=True: Idèntic resultat
+objGEO <- getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GSE220_series_matrix.txt",GSEMatrix=TRUE)
+GSMprueba <- GSMList(objGEO)[[1]]
+tableGSMprueba <- Table(GSMprueba)[]
+
+#Fitxer GSE SOFT complet
+objGEO <- getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GSE220.soft.gz",GSEMatrix=FALSE)
+#Convertir info dels gsms a dataframe
+i<-1
+vect_acc<-c()
+vect_tit<-c()
+vect_org<-c()
+vect_mol<-c()
+for(mostra in objGEO@gsms){
+   gsmaux<-objGEO@gsms[[i]]
+   i<-i+1
+   message(gsmaux@header$geo_accession)
+   vect_acc<-c(vect_acc,c(gsmaux@header$geo_accession))
+   vect_tit<-c(vect_tit,c(gsmaux@header$title))
+   vect_org<-c(vect_org,c(gsmaux@header$organism_ch1))
+   vect_mol<-c(vect_mol,c(gsmaux@header$molecule_ch1))
+}
+#Creem Data Frame
+df_gsms <- data.frame(vect_acc,vect_tit,vect_org,vect_mol)
+names(df_gsms)<-c("GEO Accession","Title","Organism","Molecule")
+
+objGEO@gsms
+
+gsm1<-objGEO@gsms[[1]]
+gsm1@header
+
+#Descarregar GSE, en forma de expressionset (matrix = true) i en forma normal (matrix=false)
+gse2553 <- getGEO('GSE2553',GSEMatrix=TRUE)  #8 MB
+
+gse2553 <- getGEO('GSE2553',GSEMatrix=FALSE) #374 MB
+
+objGEO <- getGEO("GSE220",GSEMatrix = FALSE)
+objGEO <- getGEO("GSE220",GSEMatrix = TRUE)
+
+  
+GSM1 <-getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GSM48681.soft",GSEMatrix=false)
+
+GDS1 <-getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GDS100.soft.gz",GSEMatrix=false)
+class(GDS1)
+name=GDS1@header$geo_accession
+name=GDS1@header$dataset[1]
+
+GDS2 <-getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GDS4352.soft.gz",GSEMatrix=false)
+class(GDS2)
+name=GDS2@header$geo_accession
+name=GDS2@header$dataset[1]
+
+GSE1 <-getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GSE781-GPL97_series_matrix.txt")
+class(GSE1)
+
+#Grafiques
+gse = getGEO('GSE976')[[1]]
+sdN = 3
+sds = apply(log2(exprs(gse)+0.0001),1,sd)
+library(gplots)
+heatmap.2(log2(exprs(gse)+0.0001)[sds>sdN,],trace='none',scale='row')
