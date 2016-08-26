@@ -218,7 +218,9 @@ shinyServer(function(input, output, session) {
     guardaGEO(objGEO,inFile$name,inFile$datapath)
     #Retornem info de visualitzacio de l'objecte GEO en format dataframe 
     dfView(objGEO)
-  })
+  },options = list(
+    scrollX = TRUE
+  ))
   
   # ---------------------------------------------------------------------
   # Load NCBI
