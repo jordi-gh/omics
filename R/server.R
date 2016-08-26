@@ -81,7 +81,7 @@ shinyServer(function(input, output, session) {
           tabPanel("Home", id = "home",
                    icon = icon("fa fa-cloud"),
                    mainPanel(
-                     h4("Página principal")
+                     h4(paste0("Welcome to Omics-in-Cloud ", input$.username))
                    )
           ),
           
@@ -142,10 +142,11 @@ shinyServer(function(input, output, session) {
           tabPanel("Analysis", icon = icon("fa fa-bar-chart"),
                    navlistPanel(
                      "Analysis", widths = c(2, 10),
-                     tabPanel("Heatmap GSE", id = "heatmapgse",
+                     tabPanel("Hierarchical Clustering", id = "heatmapgse",
                               sidebarLayout(
                                 sidebarPanel(
-                                  selectizeInput("gseplot", "GSE", c('Select GSE','GSE976'))
+                                  selectizeInput("gseplot", "GSE", c('Select GSE','GSE976')),
+                                  downloadButton('downloadheatmap', 'Download Plot')
                                 ),
                                 mainPanel(
                                   tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
@@ -178,21 +179,30 @@ shinyServer(function(input, output, session) {
   #---------------------------------------------------------------------
   
   # ---------------------------------------------------------------------  
-  # Analisis1: Heatmap GSE
+  # Analisis1: Hierarchical Clustering Heatmap GSE
   # --------------------------------------------------------------------- 
+  plotInputHeatmap <- function(){
+        if (input$gseplot!="Select GSE" && input$gseplot!=""){
+          destdir = file.path(gb_Rdir, 'BD')
+          gse = getGEO(input$gseplot, destdir = destdir)[[1]]
+          sdN = 3
+          sds = apply(log2(exprs(gse)+0.0001),1,sd)
+          heatmap.2(log2(exprs(gse)+0.0001)[sds>sdN,],trace='none',scale='row')
+        }
+  }
+  
   output$heatmapgse <- renderPlot({
-    
-    if (input$gseplot!="Select GSE" && input$gseplot!=""){
-      destdir = file.path(gb_Rdir, 'BD')
-      gse = getGEO(input$gseplot, destdir = destdir)[[1]]
-      sdN = 3
-      sds = apply(log2(exprs(gse)+0.0001),1,sd)
-      heatmap.2(log2(exprs(gse)+0.0001)[sds>sdN,],trace='none',scale='row')
-    }
-    
+    print(plotInputHeatmap())
   })
   
-
+  output$downloadheatmap <- downloadHandler(
+    filename = 'heatmapGSE.jpg',
+    content = function(file) {
+      jpeg(file, width=1024, height=768, units="px",quality=100)
+      print(plotInputHeatmap())
+      dev.off()
+    })
+  
   # ---------------------------------------------------------------------  
   # Load ICO
   # ---------------------------------------------------------------------  
@@ -215,7 +225,9 @@ shinyServer(function(input, output, session) {
   # ---------------------------------------------------------------------
   output$experiment <- renderDataTable({ 
     submitExperiment() #Esperamos al submit
-  })
+  },options = list(
+    scrollX = TRUE
+  ))
   
   submitExperiment <- eventReactive(input$submitexperiment,{ 
     
