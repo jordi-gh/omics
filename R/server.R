@@ -233,7 +233,9 @@ shinyServer(function(input, output) {
   # ---------------------------------------------------------------------
   output$experiment <- renderDataTable({ 
     submitExperiment() #Esperamos al submit
-  })
+  },options = list(
+    scrollX = TRUE
+  ))
   
   submitExperiment <- eventReactive(input$submitexperiment,{ 
     
