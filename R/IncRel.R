@@ -12,10 +12,15 @@ getMetadataDB <- function(){
   return(db)
 }
 
-guardaFitxer <- function(objGEO,filename,path) {
+guardaFitxer <- function(objGEO,filename,path,accession=NULL) {
   #Carreguem la db
   db <- getMetadataDB()
-  name <- nomGEO(objGEO,filename,db)
+  #Si no ens informen directament el nom GEO, el busquem a l'objecte/filename
+  if (is.null(accession)){
+    name <- nomGEO(objGEO,filename,db)
+  } else {
+    name = accession
+  }  
   uid<-existeixGEO(objGEO,name,db)  
   # Si l'hem trobat no cal afegir-lo
   if (!is.null(uid)){
