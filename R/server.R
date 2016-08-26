@@ -12,6 +12,8 @@ library(gplots)
 
 ## Carregar variables d'entorn local
 source('ConfigLocal.R')
+##Carregar variables globals
+source('ConfigGlobal.R')
 ##Carregar includes
 source(file.path(gb_Rdir, 'IncRel.R'))
 source(file.path(gb_Rdir, 'IncGEO.R'))
@@ -31,7 +33,7 @@ for (nom in res$username){
 }
 
 
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
   
   
   USER <- reactiveValues(Logged = FALSE)
@@ -203,7 +205,7 @@ shinyServer(function(input, output) {
     
     objGEO <- getGEO(filename=inFile$datapath)
     #Guardem a persistència ICO
-    guardaFitxer(objGEO,inFile$name,inFile$datapath)
+    guardaGEO(objGEO,inFile$name,inFile$datapath)
     #Retornem info de visualitzacio de l'objecte GEO en format dataframe 
     dfView(objGEO)
   })
@@ -223,7 +225,9 @@ shinyServer(function(input, output) {
       ExperimentNCBI <- getGEO(input$experimentupload, destdir = destdir)
       
       #Guardem a persistència ICO
-      #guardaFitxer(ExperimentNCBI,accession=input$experimentupload)
+      #Compte: Enviem un 'named param' a la funció
+      #http://blog.moertel.com/posts/2006-01-20-wondrous-oddities-rs-function-call-semantics.html
+      guardaGEO(ExperimentNCBI,accession=input$experimentupload)
       # Retorna dataframe de visualització segons tipus d'objecte GEO
       dfView(ExperimentNCBI)
     }
@@ -357,6 +361,18 @@ shinyServer(function(input, output) {
       USER$pass <- ""
     })
   
+  
+  # ---------------------------------------------------------------------
+  # FIN SESION SHINY: Codigo de limpieza aquí
+  # ---------------------------------------------------------------------
+  session$onSessionEnded(function() {
+    closeMetaDB();
+    message('SessionEnd OK')
+  })
+  
+  
 })
+
     
+
     
