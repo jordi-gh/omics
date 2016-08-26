@@ -7,14 +7,35 @@ source(file.path(gb_Rdir, 'IncCouch.R'))
 
 
 getMetadataDB <- function(){
+  #Mantenim una única connexió amb variable global db_meta
+  #Si ja la tenim instanciada i vàlida no cal reconnectar
+  if ((!is.null(db_meta)) && (dbIsValid(db_meta))){
+      return(db_meta)
+  }
   SQLFile = file.path(gb_Rdir, 'metadata.sqlite')
-  db <- dbConnect(SQLite(), SQLFile)
-  return(db)
+  db_meta <- dbConnect(SQLite(), SQLFile)
+  return(db_meta)
 }
 
-guardaFitxer <- function(objGEO,filename,path,accession=NULL) {
+#Tancar connexió SQLite
+closeMetaDB <- function(){
+  if ((!is.null(db_meta)) && (dbIsValid(db_meta))){
+    dbDisconnect(db_meta)
+  }
+}
+
+#Guardem objecte GEO a persistència SQLite i Couch 
+guardaGEO <- function(objecte,filename='',path='',accession=NULL) {
   #Carreguem la db
   db <- getMetadataDB()
+  objGEO = objecte
+  classe <- toupper(class(objGEO)) 
+  message(paste('guardaGEO, Classe GEO:',classe,sep=' '))
+  #Si tenim un list, utilitzem primer element de la llista (cas dels GSE baixats de NCBI)
+  if ((classe=='LIST') && (length(objecte)>0)){
+    objGEO = objecte[[1]]
+    classe=toupper(class(objGEO)) 
+  }
   #Si no ens informen directament el nom GEO, el busquem a l'objecte/filename
   if (is.null(accession)){
     name <- nomGEO(objGEO,filename,db)
@@ -144,7 +165,7 @@ sendQuery <- function(db, comanda){
   ## Converteixo a UTF-8 les comandes amb enc2utf8. 
   ## No he trobat com fer-ho per defecte tot i tenir RStudio a UTF-8
   comanda_utf8 <- enc2utf8(comanda)
-  result <- dbGetQuery(conn = db, comanda_utf8)
+  result <- dbSendQuery(conn = db, comanda_utf8)
   return(result)
 }
 
