@@ -11,7 +11,10 @@ library(RSQLite)
 
 ## Carregar variables d'entorn local
 source('ConfigLocal.R')
+##Carregar includes
 source(file.path(gb_Rdir, 'IncRel.R'))
+source(file.path(gb_Rdir, 'IncGEO.R'))
+
 options(shiny.maxRequestSize=500*1024^2)
 
 # Leer lista de usuarios i pwd 
@@ -174,12 +177,18 @@ shinyServer(function(input, output) {
     objGEO <- getGEO(filename=inFile$datapath)
     
     guardaFitxer(objGEO,inFile$name,inFile$datapath)
-    
-    if (length(Table(objGEO))==0){
-      return(NULL)
+    if (toupper(class(objGEO))=='EXPRESSIONSET'){
+      pData(objGEO)[,1:3]
+    } else if (toupper(class(objGEO))=='GSE'){
+      #Agafem info dels GSMs del GSE en format dataframe
+      getGSMsFromGSE(objGEO)
     }
-    Table(objGEO)[,1:2]
-    
+      else {
+        if (length(Table(objGEO))==0) {
+          return(NULL)
+        }
+      Table(objGEO)[,1:2]
+    }
   })
   
   # ---------------------------------------------------------------------
