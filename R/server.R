@@ -192,7 +192,7 @@ shinyServer(function(input, output) {
   
 
   # ---------------------------------------------------------------------  
-  # Upload ICO
+  # Load ICO
   # ---------------------------------------------------------------------  
   output$contents <- renderDataTable({
     
@@ -202,24 +202,14 @@ shinyServer(function(input, output) {
       return(NULL)
     
     objGEO <- getGEO(filename=inFile$datapath)
-    
+    #Guardem a persistència ICO
     guardaFitxer(objGEO,inFile$name,inFile$datapath)
-    if (toupper(class(objGEO))=='EXPRESSIONSET'){
-      pData(objGEO)[,1:3]
-    } else if (toupper(class(objGEO))=='GSE'){
-      #Agafem info dels GSMs del GSE en format dataframe
-      getGSMsFromGSE(objGEO)
-    }
-      else {
-        if (length(Table(objGEO))==0) {
-          return(NULL)
-        }
-      Table(objGEO)[,1:2]
-    }
+    #Retornem info de visualitzacio de l'objecte GEO en format dataframe 
+    dfView(objGEO)
   })
   
   # ---------------------------------------------------------------------
-  # Upload NCBI
+  # Load NCBI
   # ---------------------------------------------------------------------
   output$experiment <- renderDataTable({ 
     submitExperiment() #Esperamos al submit
@@ -231,14 +221,11 @@ shinyServer(function(input, output) {
       destdir = file.path(gb_Rdir, 'BD')
       
       ExperimentNCBI <- getGEO(input$experimentupload, destdir = destdir)
-      type <- substr(input$experimentupload, 0, 3)
-      if (type == 'GPL') cols <- c("ID", "Gene Symbol", "ENTREZ_GENE_ID")
-      else if (type == 'GSM') cols <- c("ID_REF",	"VALUE")
-      else if (type == 'GDS') cols <- c("ID_REF",	"IDENTIFIER")
       
-      if (type == 'GSE') exprs(ExperimentNCBI[[1]])
-      else Table(ExperimentNCBI)[,cols]
-      
+      #Guardem a persistència ICO
+      #guardaFitxer(ExperimentNCBI,accession=input$experimentupload)
+      # Retorna dataframe de visualització segons tipus d'objecte GEO
+      dfView(ExperimentNCBI)
     }
     
   })
