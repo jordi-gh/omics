@@ -15,15 +15,14 @@ getMetadataDB <- function(){
 guardaFitxer <- function(objGEO,filename,path) {
   #Carreguem la db
   db <- getMetadataDB()
-  name=objGEO@header$geo_accession
-  uid<-existeixFitxer(objGEO,name,db)
+  name <- nomGEO(objGEO,filename,db)
+  uid<-existeixGEO(objGEO,name,db)  
   # Si l'hem trobat no cal afegir-lo
   if (!is.null(uid)){
     return(uid)
   }
   ## Carregar objecte i segons classe posem info general del fitxer a taula del model relacional que correspongui
-  if (class(objGEO)=='GSM'){
-     #name=objGEO@header$geo_accession
+  if (toupper(class(objGEO))=='GSM'){
      uid<-GeoACouch(objGEO,name) 
      sql = 'INSERT INTO gsm (uid,name,down,path,filename,downdate) VALUES(:uid,:name,:down,:path,:filename,:downdate)'
      valors<-data.frame(uid=uid,
@@ -35,8 +34,7 @@ guardaFitxer <- function(objGEO,filename,path) {
                         )
      dbSendPreparedQuery(db, sql, bind.data = valors)
   }
-  if (class(objGEO)=='GSE'){
-    #name=objGEO@header$geo_accession
+  if ((toupper(class(objGEO))=='GSE') || (toupper(class(objGEO))=='EXPRESSIONSET')){
     uid<-GeoACouch(objGEO,name)
     sql = 'INSERT INTO gse (uid,name,down,path,filename,downdate) VALUES(:uid,:name,:down,:path,:filename,:downdate)'
     valors<-data.frame(uid=uid,
@@ -48,8 +46,7 @@ guardaFitxer <- function(objGEO,filename,path) {
                        )
     dbSendPreparedQuery(db, sql, bind.data = valors)
   }
-  if (class(objGEO)=='GPL'){
-    #name=objGEO@header$geo_accession
+  if (toupper(class(objGEO))=='GPL'){
     uid<-GeoACouch(objGEO,name) 
     sql = 'INSERT INTO gpl (uid,name,down,path,filename,downdate) VALUES(:uid,:name,:down,:path,:filename,:downdate)'
     valors<-data.frame(uid=uid,
@@ -61,8 +58,7 @@ guardaFitxer <- function(objGEO,filename,path) {
                        )
     dbSendPreparedQuery(db, sql, bind.data = valors)
   }    
-  if (class(objGEO)=='GDS'){
-    #name=objGEO@header$geo_accession
+  if (toupper(class(objGEO))=='GDS'){
     uid<-GeoACouch(objGEO,name)
     sql = 'INSERT INTO gds (uid,name,down,path,filename,downdate) VALUES(:uid,:name,:down,:path,:filename,:downdate)'
     valors<-data.frame(uid=uid,
@@ -77,26 +73,62 @@ guardaFitxer <- function(objGEO,filename,path) {
   return(uid)
 }
 
-existeixFitxer <- function(objGEO,nom, db){
+nomGEO <- function(objGEO,filename, db){
   if(missing(db)) {
     #Carreguem la db
     db <- getMetadataDB()
   } 
-  #Mirem si tenim el fitxer a la BD JSON amb una query a la BD relacional de metadades 
+  switch(toupper(class(objGEO)),
+         'GSM'={name=objGEO@header$geo_accession},
+         'GPL'={name=objGEO@header$geo_accession},
+         'GSE'={name=objGEO@header$geo_accession},
+         'GDS'={
+           #En GDS no hay geo_accession para identificar el nombre del fichero 
+           #El nombre lo saco de la serie (GSE) asociada al primer sample, quizá no sea lo mejor
+           #Entiendo que dentro de un fichero GSE todos los samples deberían estar asociados a su serie...
+           name=objGEO@header$dataset[1]
+         },
+         'EXPRESSIONSET'={
+           #Si es un GSE format Matrix agafem el nom del filename, sembla que no es pot accedir al geo_accession des de l'objecte
+           #També afegim sufixe '_matrix' per diferenciar-lo del GSE complet
+           pos <- regexpr('_series_matrix.txt',filename)
+           if (pos>0){
+             name<-substr(filename,1,pos-1)
+           } else {
+             stop('Invalid GEO file')
+           }
+           name<-paste(name,'_matrix',sep='')
+
+         },
+         stop('Invalid GEO Object')
+  )
+  return(name)
+}
+
+existeixGEO <- function(objGEO,nom, db){
+  if(missing(db)) {
+    #Carreguem la db
+    db <- getMetadataDB()
+  } 
+  #Mirem si tenim l'objecte GEO a la BD JSON amb una query a la BD relacional de metadades 
+  nomreg=nom
   switch(toupper(class(objGEO)),
          'GSM'={tablename='gsm'},
          'GPL'={tablename='gpl'},
          'GSE'={tablename='gse'},
          'GDS'={tablename='gds'},
+         'EXPRESSIONSET'={
+           tablename='gse'
+           paste(nomreg,'_matrix',sep='')
+         },
          stop('Invalid GEO Object')
   )       
   sql = paste('SELECT * FROM ',tablename,sep='')
-  sql = paste(paste(paste(sql,' WHERE name = "',sep=''),nom,sep=''),'"',sep='')
+  sql = paste(paste(paste(sql,' WHERE name = "',sep=''),nomreg,sep=''),'"',sep='')
   res = dbGetQuery(db, sql)
   #Si ja el tenim retornem uid 
   if (nrow(res)>0){
     uid=res$uid
-    #message('TROBAT')
     return(uid)
   } else {
     return(NULL)
@@ -119,3 +151,4 @@ getQuery <- function(db, comanda){
   result <- dbGetQuery(conn = db, comanda_utf8)
   return(result)
 }
+
