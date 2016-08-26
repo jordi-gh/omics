@@ -4,8 +4,8 @@
 dfView <- function(objecte){
    objGEO = objecte
    classe <- toupper(class(objGEO)) 
-   message(paste('Classe GEO:',classe,sep=' '))
-   #Si tenim un list, analitzem classe de primer element (cas dels GSE baixats de NCBI)
+   message(paste('dfView, Classe GEO:',classe,sep=' '))
+   #Si tenim un list, utilitzem primer element de la llista (cas dels GSE baixats de NCBI)
    if ((classe=='LIST') && (length(objecte)>0)){
       objGEO = objecte[[1]]
       classe=toupper(class(objGEO)) 
