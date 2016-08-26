@@ -140,7 +140,7 @@ shinyServer(function(input, output) {
           tabPanel("Analysis", icon = icon("fa fa-bar-chart"),
                    navlistPanel(
                      "Analysis", widths = c(2, 10),
-                     tabPanel("Heatmap GSE", id = "heatmapgse",
+                     tabPanel("Hierarchical Clustering", id = "heatmapgse",
                               sidebarLayout(
                                 sidebarPanel(
                                   selectizeInput("gseplot", "GSE", c('Select GSE','GSE976')),
@@ -177,7 +177,7 @@ shinyServer(function(input, output) {
   #---------------------------------------------------------------------
   
   # ---------------------------------------------------------------------  
-  # Analisis1: Heatmap GSE
+  # Analisis1: Hierarchical Clustering Heatmap GSE
   # --------------------------------------------------------------------- 
   plotInputHeatmap <- function(){
         if (input$gseplot!="Select GSE" && input$gseplot!=""){
@@ -191,14 +191,6 @@ shinyServer(function(input, output) {
   
   output$heatmapgse <- renderPlot({
     print(plotInputHeatmap())
-#     if (input$gseplot!="Select GSE" && input$gseplot!=""){
-#       destdir = file.path(gb_Rdir, 'BD')
-#       gse = getGEO(input$gseplot, destdir = destdir)[[1]]
-#       sdN = 3
-#       sds = apply(log2(exprs(gse)+0.0001),1,sd)
-#       heatmap.2(log2(exprs(gse)+0.0001)[sds>sdN,],trace='none',scale='row')
-#     }
-    
   })
   
   output$downloadheatmap <- downloadHandler(
