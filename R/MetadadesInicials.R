@@ -25,5 +25,20 @@ sendQuery(db,sql)
 sql<-"INSERT INTO usuaris VALUES(3,'jtorresz','e5472d7e14c150dab0c8deda3aa9032e','Jordi','Torres','Zapata','jtorresz@uic.es',NULL,1)"
 sendQuery(db,sql)
 
+sql<-"INSERT INTO grups (id,nomgrup,descripcio) VALUES (1,'Grup1','Grup Recerca1')"
+sendQuery(db,sql)
+
+sql<-"INSERT INTO grups (id,nomgrup,descripcio) VALUES (2,'Grup2','Grup Recerca2')"
+sendQuery(db,sql)
+
+sql<-"INSERT INTO usuari_grup (userid,grupid) VALUES (1,'1')"
+sendQuery(db,sql)
+
+sql<-"INSERT INTO usuari_grup (userid,grupid) VALUES (2,'2')"
+sendQuery(db,sql)
+
+sql<-"INSERT INTO usuari_grup (userid,grupid) VALUES (3,'1')"
+sendQuery(db,sql)
+
 dbDisconnect(db)
 
