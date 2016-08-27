@@ -158,6 +158,14 @@ shinyServer(function(input, output, session) {
                    )
           ),
           
+          # Manager Options
+          tabPanel("Manager Options", icon = icon("fa fa-cog"),
+                   navlistPanel(widths = c(2, 10),
+                     tabPanel("New User", icon = icon("fa fa-plus-circle"), id = "newuser"),
+                     tabPanel("Share File", icon = icon("fa fa-exchange"), id = "sharefile")
+                   )
+          ),
+          
           # Ayuda
           tabPanel("Help", 
                    icon = icon("fa fa-question"), id = "help"
