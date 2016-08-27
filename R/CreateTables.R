@@ -82,5 +82,30 @@ dbSendQuery(conn = db,
             descripcio TEXT
             )
             ")
+
+dbSendQuery(conn = db,
+            "CREATE TABLE icofiles
+            (uid TEXT PRIMARY KEY,
+             name TEXT,
+             path TEXT,
+             filename TEXT,
+             loaddate TEXT,
+             typefile TEXT, 
+             userowner INT,
+             FOREIGN KEY (userowner) REFERENCES usuaris(id)
+             )
+")
+
+dbSendQuery(conn = db,
+            "CREATE TABLE accessfiles
+            (id INT PRIMARY KEY,
+             uidfile TEXT,
+             idgroup INT,  
+             dateaccess TEXT,
+             datedenied TEXT,
+             FOREIGN KEY (uidfile) REFERENCES icofiles(uid)
+             FOREIGN KEY (idgroup) REFERENCES grups(id)
+             )
+")
 dbDisconnect(db)
 
