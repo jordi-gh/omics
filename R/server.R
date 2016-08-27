@@ -32,15 +32,15 @@ for (nom in res$username){
   i <- i+1
 }
 
-
 shinyServer(function(input, output, session) {
   
-  
   USER <- reactiveValues(Logged = FALSE)
+  USERPROFILE <- reactiveValues(Profile = FALSE)
   
   observeEvent(input$.login, {
     if (isTRUE(credentials[[input$.username]]==input$.password)){
       USER$Logged <- TRUE
+      USERPROFILE$Profile <- getUserProfile(db,input$.username)
     } else {
       show("message")
       output$message = renderText("Invalid user name or password")
@@ -80,8 +80,20 @@ shinyServer(function(input, output, session) {
           # Home
           tabPanel("Home", id = "home",
                    icon = icon("fa fa-cloud"),
+                   titlePanel("Welcome to Omics-in-Cloud"), br(),
+                   sidebarLayout(
+                     sidebarPanel(
+                       h3(paste0("Profile User ")),
+                       br(),
+                       h4(paste0("User    : ", USERPROFILE$Profile$nom, " ", USERPROFILE$Profile$cognom1, " ",USERPROFILE$Profile$cognom2)),
+                       h4(paste0("Username: ", USERPROFILE$Profile$username)),
+                       h4(paste0("Group   : ", USERPROFILE$Profile$nomgrup)),
+                       h4(paste0("Role    : ", USERPROFILE$Profile$nomrol))
+                     ),
                    mainPanel(
-                     h4(paste0("Welcome to Omics-in-Cloud ", input$.username))
+                     h1("Your data"),
+                     br()
+                   )
                    )
           ),
           
@@ -158,6 +170,14 @@ shinyServer(function(input, output, session) {
                    )
           ),
           
+          # Manager Options
+          tabPanel("Manager Options", icon = icon("fa fa-cog"),
+                   navlistPanel(widths = c(2, 10),
+                     tabPanel("New User", icon = icon("fa fa-plus-circle"), id = "newuser"),
+                     tabPanel("Share File", icon = icon("fa fa-exchange"), id = "sharefile")
+                   )
+          ),
+          
           # Ayuda
           tabPanel("Help", 
                    icon = icon("fa fa-question"), id = "help"
@@ -218,7 +238,9 @@ shinyServer(function(input, output, session) {
     guardaGEO(objGEO,inFile$name,inFile$datapath)
     #Retornem info de visualitzacio de l'objecte GEO en format dataframe 
     dfView(objGEO)
-  })
+  },options = list(
+    scrollX = TRUE
+  ))
   
   # ---------------------------------------------------------------------
   # Load NCBI
@@ -370,6 +392,7 @@ shinyServer(function(input, output, session) {
     # ---------------------------------------------------------------------
     observeEvent(input$logout , {
       USER$Logged <- FALSE
+      USERPROFILE$Profile <- FALSE
       USER$pass <- ""
     })
   

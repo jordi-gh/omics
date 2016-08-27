@@ -161,6 +161,33 @@ existeixGEO <- function(objGEO,nom, db){
   }
 }
 
+getUserProfile <- function (db,username){
+  
+  if(missing(db)) {
+    #Carreguem la db
+    db <- getMetadataDB()
+  } 
+  
+  sql = paste(paste("select *
+        from usuaris u
+        ,		usuari_grup ug
+        ,		rols r
+        ,		grups g
+        where u.username = '",username,sep=''),
+        "' and u.id = ug.userid
+        and u.rolid = r.id
+        and ug.grupid=g.id",sep='')
+  
+  res = dbGetQuery(db, sql)
+  
+  if (nrow(res)>0){
+    return(res)
+  } else {
+    return(NULL)
+  }
+}
+
+
 sendQuery <- function(db, comanda){
   ## Converteixo a UTF-8 les comandes amb enc2utf8. 
   ## No he trobat com fer-ho per defecte tot i tenir RStudio a UTF-8
