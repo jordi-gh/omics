@@ -1,7 +1,6 @@
 require(Biobase)
 library(shiny)
 library(shinyjs)
-library(shiny)
 library(shinyBS)
 library(GEOquery)
 library(GEOmetadb)
@@ -31,6 +30,10 @@ for (nom in res$username){
   credentials[[nom]] <- res$pwd[i]
   i <- i+1
 }
+
+#campos obligatorios para el formulario de usuario nuevo y todos los campos del form
+fieldsMandatory <- c("newusername", "newpassword","newname","newlastname1","newmail","newrole")
+fieldsAll <- c("newusername", "newpassword","newname","newlastname1","newlastname2","newmail","newrole")
 
 shinyServer(function(input, output, session) {
   
@@ -83,7 +86,7 @@ shinyServer(function(input, output, session) {
                    titlePanel("Welcome to Omics-in-Cloud"), br(),
                    sidebarLayout(
                      sidebarPanel(
-                       h3(paste0("Profile User ")),
+                       h3(img(src="img/profile.png"),paste0("Profile User ")),
                        br(),
                        h4(paste0("User    : ", USERPROFILE$Profile$nom, " ", USERPROFILE$Profile$cognom1, " ",USERPROFILE$Profile$cognom2)),
                        h4(paste0("Username: ", USERPROFILE$Profile$username)),
@@ -173,7 +176,25 @@ shinyServer(function(input, output, session) {
           # Manager Options
           tabPanel("Manager Options", icon = icon("fa fa-cog"),
                    navlistPanel(widths = c(2, 10),
-                     tabPanel("New User", icon = icon("fa fa-plus-circle"), id = "newuser"),
+                     tabPanel("New User", icon = icon("fa fa-plus-circle"), id = "newuser",
+                              sidebarLayout(
+                                sidebarPanel(width = 10, id='newuserform',
+                                             h4(paste0("New User in: ", USERPROFILE$Profile$nomgrup)),br(),
+                                             fluidRow( column(4,textInput("newusername", labelMandatory("Username"),""),
+                                             passwordInput("newpassword", labelMandatory("Password"),""),
+                                             selectInput("newrole", labelMandatory("User role"), c("","1","2")),
+                                             actionButton("submit", "New User", class = "btn-primary")
+                                             ),
+                                             column(7, textInput("newname", labelMandatory("Name"),""),
+                                             textInput("newlastname1", labelMandatory("Lastname 1"),""),
+                                             textInput("newlastname2", "Lastname 2",""),
+                                             textInput("newmail", labelMandatory("Mail"),"")))
+                                ),
+                                mainPanel(
+                                  
+                                )
+                              )
+                      ),
                      tabPanel("Share File", icon = icon("fa fa-exchange"), id = "sharefile")
                    )
           ),
@@ -396,6 +417,43 @@ shinyServer(function(input, output, session) {
       USER$pass <- ""
     })
   
+  # ---------------------------------------------------------------------
+  # New User Form
+  # ---------------------------------------------------------------------
+  observe({
+    mandatoryFilled <-
+      vapply(fieldsMandatory,
+             function(x) {
+               !is.null(input[[x]]) && input[[x]] != ""
+             },
+             logical(1))
+    mandatoryFilled <- all(mandatoryFilled)
+    
+    shinyjs::toggleState(id = "submit", condition = mandatoryFilled)
+  })
+  
+  labelMandatory <- function(label) {
+    tagList(
+      label,
+      span("*", class = "mandatory_star")
+    )
+  }
+  
+  formData <- reactive({
+    data <- sapply(fieldsAll, function(x) input[[x]])
+    data
+  })
+  
+  saveData <- function(data) {
+    db <- getMetadataDB()
+    sql = paste0("INSERT INTO usuaris (username,pwd,nom,cognom1,cognom2,mail,lastlog,rolid) values ('",data[1],"','",data[2],"','",data[3],"','",data[4],"','",data[5],"','",data[6],"','',",data[7],")")
+    result = sendQuery(db,sql)
+  }
+  
+  observeEvent(input$submit, {
+    saveData(formData())
+    shinyjs::reset("newuserform")
+  })
   
   # ---------------------------------------------------------------------
   # FIN SESION SHINY: Codigo de limpieza aquí
