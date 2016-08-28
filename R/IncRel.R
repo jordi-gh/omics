@@ -168,7 +168,7 @@ getUserProfile <- function (db,username){
     db <- getMetadataDB()
   } 
   
-  sql = paste(paste("select *
+  sql = paste(paste("select *, ug.grupid as grupuser
         from usuaris u
         ,		usuari_grup ug
         ,		rols r

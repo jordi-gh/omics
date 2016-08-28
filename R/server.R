@@ -33,7 +33,7 @@ for (nom in res$username){
 
 #campos obligatorios para el formulario de usuario nuevo y todos los campos del form
 fieldsMandatory <- c("newusername", "newpassword","newname","newlastname1","newmail","newrole")
-fieldsAll <- c("newusername", "newpassword","newname","newlastname1","newlastname2","newmail","newrole")
+fieldsAll <- c("newusername", "newpassword","newname","newlastname1","newlastname2","newmail","newrole","newgroup")
 
 shinyServer(function(input, output, session) {
   
@@ -179,7 +179,7 @@ shinyServer(function(input, output, session) {
                      tabPanel("New User", icon = icon("fa fa-plus-circle"), id = "newuser",
                               sidebarLayout(
                                 sidebarPanel(width = 10, id='newuserform',
-                                             h4(paste0("New User in: ", USERPROFILE$Profile$nomgrup)),br(),
+                                             h4(paste0("New user ", USERPROFILE$Profile$nomgrup)),br(),
                                              fluidRow( column(4,textInput("newusername", labelMandatory("Username"),""),
                                              passwordInput("newpassword", labelMandatory("Password"),""),
                                              selectInput("newrole", labelMandatory("User role"), c("","1","2")),
@@ -188,7 +188,8 @@ shinyServer(function(input, output, session) {
                                              column(7, textInput("newname", labelMandatory("Name"),""),
                                              textInput("newlastname1", labelMandatory("Lastname 1"),""),
                                              textInput("newlastname2", "Lastname 2",""),
-                                             textInput("newmail", labelMandatory("Mail"),"")))
+                                             textInput("newmail", labelMandatory("Mail"),"")),
+                                             hidden(textInput("newgroup","Group",USERPROFILE$Profile$grupuser)))
                                 ),
                                 mainPanel(
                                   
@@ -448,6 +449,10 @@ shinyServer(function(input, output, session) {
     db <- getMetadataDB()
     sql = paste0("INSERT INTO usuaris (username,pwd,nom,cognom1,cognom2,mail,lastlog,rolid) values ('",data[1],"','",data[2],"','",data[3],"','",data[4],"','",data[5],"','",data[6],"','',",data[7],")")
     result = sendQuery(db,sql)
+    sql = paste0("SELECT id from usuaris where username='",data[1],"'")
+    result = dbGetQuery(db,sql)
+    sql2 = paste0("INSERT INTO usuari_grup (userid,grupid) VALUES (",result$id,",'",data[8],"')");
+    result2 = sendQuery(db,sql2)
   }
   
   observeEvent(input$submit, {
