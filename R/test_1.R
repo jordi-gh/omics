@@ -216,7 +216,7 @@ pdExperimentNCBI <- pData(phenoData(objGEO)) ## PEta: unable to find an inherite
 objGEO <- getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GSE220.soft.gz",GSEMatrix=TRUE)
 pdExperimentNCBI <- pData(phenoData(objGEO[[1]]))  ##Peta: Error in objGEO[[1]] : this S4 class is not subsettable
 
-
-#Problema colnames no existents
-objGEO <- getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GPL1111.soft",GSEMatrix=false)
-colnames(Table(objGEO))
+#Carregar file no GEO
+objNOGEO <- getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\Gene expression_ log2_test.xlsx",GSEMatrix=false) #Peta
+#Llegir en format binari
+fitxer <- readBin(con="C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\Gene expression_ log2_test.xlsx","raw")

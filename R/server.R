@@ -233,11 +233,25 @@ shinyServer(function(input, output, session) {
     if (is.null(inFile))
       return(NULL)
     
-    objGEO <- getGEO(filename=inFile$datapath)
-    #Guardem a persistència ICO
-    guardaGEO(objGEO,inFile$name,inFile$datapath)
-    #Retornem info de visualitzacio de l'objecte GEO en format dataframe 
-    dfView(objGEO)
+    #Intentem obrir en Format GEO. Si no ho és mostrem avís abans de continuar
+    esGEO=TRUE
+    res <- tryCatch({
+      objGEO <- getGEO(filename=inFile$datapath)
+    }, error = function(err){
+      message(paste('#Fitxer GEo invalid o format no reconegut: ',err,sep=''))
+      esGEO=FALSE
+    })  
+    
+    #Guardem a persistència ICO 
+    if(isTRUE(esGEO)){
+      #Es fitxer GEO
+      guardaGEO(objGEO,inFile$name,inFile$datapath)
+      #Retornem info de visualitzacio de l'objecte GEO en format dataframe 
+      dfView(objGEO)
+    } else {
+      #Fitxer no GEO
+      objNoGEO <- 
+    }
   },options = list(
     scrollX = TRUE
   ))
