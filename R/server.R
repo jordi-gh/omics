@@ -33,7 +33,10 @@ for (nom in res$username){
 
 #campos obligatorios para el formulario de usuario nuevo y todos los campos del form
 fieldsMandatory <- c("newusername", "newpassword","newname","newlastname1","newmail","newrole")
-fieldsAll <- c("newusername", "newpassword","newname","newlastname1","newlastname2","newmail","newrole","newgroup")
+fieldsAll <- c("newusername", "newpassword","newname","newlastname1","newlastname2","newmail","newrole","newgroup","userrolid")
+res_roles <- getRoles(db,'no_admin')
+
+
 
 shinyServer(function(input, output, session) {
   
@@ -180,16 +183,31 @@ shinyServer(function(input, output, session) {
                               sidebarLayout(
                                 sidebarPanel(width = 10, id='newuserform',
                                              h4(paste0("New user ", USERPROFILE$Profile$nomgrup)),br(),
+                                             shinyjs::hidden(
+                                               div(
+                                                 id = "saved_msg",
+                                                 h3("User saved !"),
+                                                 br()
+                                               )
+                                             ),
+                                             shinyjs::hidden(
+                                               div(
+                                                 id = "error_msg",
+                                                 h3("Not save. Permission denied. Please, contact with your manager"),
+                                                 br()
+                                               )
+                                             ),
                                              fluidRow( column(4,textInput("newusername", labelMandatory("Username"),""),
                                              passwordInput("newpassword", labelMandatory("Password"),""),
-                                             selectInput("newrole", labelMandatory("User role"), c("","1","2")),
+                                             selectInput("newrole", labelMandatory("User role"), choices = cbind(name = rownames(res_roles), res_roles)),
                                              actionButton("submit", "New User", class = "btn-primary")
                                              ),
                                              column(7, textInput("newname", labelMandatory("Name"),""),
                                              textInput("newlastname1", labelMandatory("Lastname 1"),""),
                                              textInput("newlastname2", "Lastname 2",""),
                                              textInput("newmail", labelMandatory("Mail"),"")),
-                                             hidden(textInput("newgroup","Group",USERPROFILE$Profile$grupuser)))
+                                             hidden(textInput("newgroup","Group",USERPROFILE$Profile$grupuser)),
+                                             hidden(textInput("userrolid","Rol",USERPROFILE$Profile$rolid)))
                                 ),
                                 mainPanel(
                                   
@@ -456,10 +474,20 @@ shinyServer(function(input, output, session) {
   }
   
   observeEvent(input$submit, {
-    saveData(formData())
-    shinyjs::reset("newuserform")
+    data <- formData()
+    # Solo permite guardar si el rol es 1 admin o 2 coordinador
+    if (data[9]==1 || data[9]==2){
+      saveData(data)
+      shinyjs::reset("newuserform")
+      shinyjs::show("saved_msg")
+    }
+    else{
+      shinyjs::reset("newuserform")
+      shinyjs::show("error_msg")
+    }
   })
   
+
   # ---------------------------------------------------------------------
   # FIN SESION SHINY: Codigo de limpieza aquí
   # ---------------------------------------------------------------------

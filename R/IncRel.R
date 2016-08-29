@@ -161,6 +161,9 @@ existeixGEO <- function(objGEO,nom, db){
   }
 }
 
+#----------------------------------------------------------
+# Retorna los datos de un usuario a partir del username
+#----------------------------------------------------------
 getUserProfile <- function (db,username){
   
   if(missing(db)) {
@@ -187,6 +190,34 @@ getUserProfile <- function (db,username){
   }
 }
 
+#----------------------------------------------------------
+# Retorna la lista de roles de la aplicación
+# type = no_admin -> todos los roles
+# en caso contrario todos
+#----------------------------------------------------------
+getRoles <- function (db, type){
+  
+  if(missing(db)) {
+    #Carreguem la db
+    db <- getMetadataDB()
+  }
+  
+  if (type=='no_admin'){
+    sql="SELECT nomrol,id FROM rols WHERE id<>1"
+  }
+  else{
+    sql="SELECT nomrol,id FROM rols"
+  }
+  
+  res = dbGetQuery(db, sql)
+  
+  if (nrow(res)>0){
+    return(res)
+  } else {
+    return(NULL)
+  }
+  
+}
 
 sendQuery <- function(db, comanda){
   ## Converteixo a UTF-8 les comandes amb enc2utf8. 

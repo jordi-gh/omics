@@ -22,3 +22,5 @@ border-radius: 5px;
 }
 
 .mandatory_star { color: red; }
+#saved_msg { color: green; }
+#error_msg { color: red; }
