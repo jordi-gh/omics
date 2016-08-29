@@ -161,6 +161,30 @@ existeixGEO <- function(objGEO,nom, db){
   }
 }
 
+#Guardem fitxer format lliure ICO a Couch
+guardaNoGEO <- function(dataJSON,filename='',filenamepath='',userid='') {
+  #Carreguem la db
+  db <- getMetadataDB()
+  uid<-existeixNoGEO(filename,db)  
+  # Si l'hem trobat no cal afegir-lo
+  if (!is.null(uid)){
+    return(uid)
+  }
+  ## Guardar fitxer a taula fitxers ICO
+  uid<-NoGeoACouch(dataJSON,filename) 
+  sql = 'INSERT INTO icofiles (uid,name,path,filename,loaddate,typefile,userowner) VALUES(:uid,:name,:path,:filename,:loaddate,:typefile,:userowner)'
+  valors<-data.frame(uid=uid,
+                     name=filename,
+                     down=1,
+                     path=filenamepath,
+                     loaddate=format(Sys.time(),format='%Y/%m/%d %H:%M:%S'),
+                     typefile='NA',
+                     userowner=userid
+                     )
+  dbSendPreparedQuery(db, sql, bind.data = valors)
+  return(uid)
+}  
+
 getUserProfile <- function (db,username){
   
   if(missing(db)) {

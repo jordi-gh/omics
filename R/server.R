@@ -250,7 +250,9 @@ shinyServer(function(input, output, session) {
       dfView(objGEO)
     } else {
       #Fitxer no GEO
-      objNoGEO <- 
+      fitxer_str <- readr::read_file(inFile$datapath)
+      fitxer_json <- toJSON(fitxer_str)
+      guardaNoGEO(fitxer_json,inFile$name,inFile$datapath,1)
     }
   },options = list(
     scrollX = TRUE

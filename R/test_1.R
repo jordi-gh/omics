@@ -220,3 +220,10 @@ pdExperimentNCBI <- pData(phenoData(objGEO[[1]]))  ##Peta: Error in objGEO[[1]] 
 objNOGEO <- getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\Gene expression_ log2_test.xlsx",GSEMatrix=false) #Peta
 #Llegir en format binari
 fitxer <- readBin(con="C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\Gene expression_ log2_test.xlsx","raw")
+#LLegir utilitzant readr
+library(readr)
+fitxer_str <- readr::read_file("C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\Gene expression_ log2_test.xlsx")
+
+# User profiles
+db <- getMetadataDB()
+perfil <- getUserProfile(db,'jtorresz')
