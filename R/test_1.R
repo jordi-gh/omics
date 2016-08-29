@@ -220,3 +220,6 @@ pdExperimentNCBI <- pData(phenoData(objGEO[[1]]))  ##Peta: Error in objGEO[[1]] 
 #Problema colnames no existents
 objGEO <- getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GPL1111.soft",GSEMatrix=false)
 colnames(Table(objGEO))
+
+db <- getMetadataDB()
+res_roles <- getRoles(db,'no_admin')
