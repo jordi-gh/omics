@@ -199,7 +199,8 @@ shinyServer(function(input, output, session) {
                                              ),
                                              fluidRow( column(4,textInput("newusername", labelMandatory("Username"),""),
                                              passwordInput("newpassword", labelMandatory("Password"),""),
-                                             selectInput("newrole", labelMandatory("User role"), choices = cbind(name = rownames(res_roles), res_roles)),
+                                             #selectInput("newrole", labelMandatory("User role"), choices = cbind(name = rownames(res_roles), res_roles)),
+                                             selectInput("newrole", labelMandatory("User role"), choices = split(res_roles$id,res_roles$nomrol)),
                                              actionButton("submit", "New User", class = "btn-primary")
                                              ),
                                              column(7, textInput("newname", labelMandatory("Name"),""),
