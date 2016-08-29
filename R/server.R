@@ -172,7 +172,22 @@ shinyServer(function(input, output, session) {
                                 )
                               )
                      ),
-                     tabPanel("Anal2", id = "anal2")
+                     tabPanel("GSM bins", id = "gsebins",
+                              sidebarLayout(
+                                sidebarPanel(
+                                  sliderInput("bins",
+                                              "Number of bins:",
+                                              min = 1,
+                                              max = 20,
+                                              value = 10)
+                                ),
+                                
+                                # Show a plot of the generated distribution
+                                mainPanel(
+                                  plotOutput("distPlot")
+                                )
+                              )
+                      )
                    )
           ),
           
@@ -263,6 +278,21 @@ shinyServer(function(input, output, session) {
       print(plotInputHeatmap())
       dev.off()
     })
+  
+  # ---------------------------------------------------------------------  
+  # Analisis2: GSM Bins
+  # --------------------------------------------------------------------- 
+  output$distPlot <- renderPlot({
+    ExperimentNCBI <- getGEO("GSM320590", destdir = destdir)
+    cols <- c("VALUE")
+    
+    Value <- Table(ExperimentNCBI)[,cols]
+    bins <- seq(min(Value), max(Value), length.out = input$bins + 1)
+    
+    # draw the histogram with the specified number of bins
+    hist(Value, breaks = bins, col = 'red', border = 'white',
+         main = 'GSM320590 values', labels = TRUE)
+  })
   
   # ---------------------------------------------------------------------  
   # Load ICO
