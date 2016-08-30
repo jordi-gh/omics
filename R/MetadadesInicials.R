@@ -31,6 +31,9 @@ sendQuery(db,sql)
 sql<-"INSERT INTO grups (id,nomgrup,descripcio) VALUES (2,'Grup2','Grup Recerca2')"
 sendQuery(db,sql)
 
+sql<-"INSERT INTO grups (id,nomgrup,descripcio) VALUES (3,'Grup3','Grup Recerca3')"
+sendQuery(db,sql)
+
 sql<-"INSERT INTO usuari_grup (userid,grupid) VALUES (1,'1')"
 sendQuery(db,sql)
 

@@ -37,11 +37,11 @@ fieldsAll <- c("newusername", "newpassword","newname","newlastname1","newlastnam
 res_roles <- getRoles(db,'no_admin')
 
 
-
 shinyServer(function(input, output, session) {
   
   USER <- reactiveValues(Logged = FALSE)
   USERPROFILE <- reactiveValues(Profile = FALSE)
+  #res_icofilesgrup <- getIcofilesGroup(db,USERPROFILE$Profile$grupuser)
   
   observeEvent(input$.login, {
     if (isTRUE(credentials[[input$.username]]==input$.password)){
@@ -65,6 +65,9 @@ shinyServer(function(input, output, session) {
                       textOutput("message")
       ))
     } else {
+      
+      #para el formulario de cambio de permisos
+      res_grups <- getGrups(db,USERPROFILE$Profile$grupuser)
       
       # ---------------------------------------------------------------------  
       # TODA LA INTERFICIE AQUÍ
@@ -199,7 +202,6 @@ shinyServer(function(input, output, session) {
                                              ),
                                              fluidRow( column(4,textInput("newusername", labelMandatory("Username"),""),
                                              passwordInput("newpassword", labelMandatory("Password"),""),
-                                             #selectInput("newrole", labelMandatory("User role"), choices = cbind(name = rownames(res_roles), res_roles)),
                                              selectInput("newrole", labelMandatory("User role"), choices = split(res_roles$id,res_roles$nomrol)),
                                              actionButton("submit", "New User", class = "btn-primary")
                                              ),
@@ -210,13 +212,30 @@ shinyServer(function(input, output, session) {
                                              hidden(textInput("newgroup","Group",USERPROFILE$Profile$grupuser)),
                                              hidden(textInput("userrolid","Rol",USERPROFILE$Profile$rolid)))
                                 ),
-                                mainPanel(
-                                  
-                                )
+                                mainPanel()
                               )
                       ),
-                     tabPanel("Share File", icon = icon("fa fa-exchange"), id = "sharefile")
-                   )
+                     tabPanel("Share File", icon = icon("fa fa-exchange"), id = "sharefile",
+                               sidebarLayout(
+                                 sidebarPanel(width = 10, id='sharefileform',
+                                   fluidRow(column(2,checkboxGroupInput("idgrups", "Select groups:", choices = split(res_grups$id,res_grups$nomgrup)),
+                                   br(),br(),actionButton("submitaccess", "Share file", class = "btn-primary")),
+                                   column(8,
+                                          shinyjs::hidden(
+                                            div(
+                                              id = "shared_msg",
+                                              h3("File shared !"),
+                                              br()
+                                            )
+                                          ),
+                                   h4("Select file to share (row table):"),br(),
+                                   dataTableOutput('tblfilesico'))
+                                   )
+                                ),
+                                mainPanel()
+                               )
+                            )
+                  )
           ),
           
           # Ayuda
@@ -488,7 +507,44 @@ shinyServer(function(input, output, session) {
     }
   })
   
-
+  # ---------------------------------------------------------------------
+  # Share ICOfiles
+  # ---------------------------------------------------------------------
+  filesData <- reactive({
+    res_icofilesgrup <- getIcofilesGroup(db,USERPROFILE$Profile$grupuser)
+    res_icofilesgrup
+  })
+  
+  output$tblfilesico = DT::renderDataTable({
+        DT::datatable(filesData(),
+                     options = list(orderClasses = TRUE,
+                                    aLengthMenu = c(5, 10, 25),
+                                     pageLength = 5)
+                     , selection = 'single')
+  })
+  
+  observeEvent(input$submitaccess, {
+    #grupos seleccionados (1 o mas de uno)
+    idgrupsselected <- input$idgrups
+    #fichero seleccionado
+    uidselected <- filesData()[input$tblfilesico_rows_selected,]$uid
+    
+    db <- getMetadataDB()
+    # borramos todos los derechos que habia sobre el fichero compartido
+    sql = paste0("DELETE FROM accessfiles WHERE uidfile = '",uidselected,"'")
+    result = dbGetQuery(db,sql)
+    
+    # compartimos el fichero con los grupos seleccionados
+     for (i in 1:length(idgrupsselected)){
+       sql = paste0("INSERT INTO accessfiles (uidfile,idgroup,dateaccess) VALUES ('",uidselected,"',",idgrupsselected[i],",date('now'))")
+       result = dbGetQuery(db,sql)
+     }
+    
+    #mensaje y reset de form
+    shinyjs::reset("sharefileform")
+    shinyjs::show("shared_msg")
+  })
+  
   # ---------------------------------------------------------------------
   # FIN SESION SHINY: Codigo de limpieza aquí
   # ---------------------------------------------------------------------
