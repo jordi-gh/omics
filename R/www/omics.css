@@ -20,3 +20,8 @@ padding-bottom: 40px;
 padding-right: 30px;
 border-radius: 5px;
 }
+
+.mandatory_star { color: red; }
+#saved_msg { color: green; }
+#shared_msg { color: green; }
+#error_msg { color: red; }

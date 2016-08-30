@@ -206,6 +206,9 @@ existeixNoGEO <- function(nom, db){
 }
 
 
+#----------------------------------------------------------
+# Retorna los datos de un usuario a partir del username
+#----------------------------------------------------------
 getUserProfile <- function (db,username){
   
   if(missing(db)) {
@@ -213,7 +216,7 @@ getUserProfile <- function (db,username){
     db <- getMetadataDB()
   } 
   
-  sql = paste(paste("select *
+  sql = paste(paste("select *, ug.grupid as grupuser
         from usuaris u
         ,		usuari_grup ug
         ,		rols r
@@ -232,6 +235,85 @@ getUserProfile <- function (db,username){
   }
 }
 
+#----------------------------------------------------------
+# Retorna la lista de roles de la aplicación
+# type = no_admin -> todos los roles
+# en caso contrario todos
+#----------------------------------------------------------
+getRoles <- function (db, type){
+  
+  if(missing(db)) {
+    #Carreguem la db
+    db <- getMetadataDB()
+  }
+  
+  if (type=='no_admin'){
+    sql="SELECT * FROM rols WHERE id<>1"
+  }
+  else{
+    sql="SELECT * FROM rols"
+  }
+  
+  res = dbGetQuery(db, sql)
+  
+  if (nrow(res)>0){
+    return(res)
+  } else {
+    return(NULL)
+  }
+  
+}
+
+#----------------------------------------------------------
+# Retorna la lista de ficheros propiedad del grupo
+#----------------------------------------------------------
+getIcofilesGroup <- function (db, idgrupo){
+  
+  if(missing(db)) {
+    #Carreguem la db
+    db <- getMetadataDB()
+  }
+  
+  sql=paste0("SELECT i.uid,i.name,i.path,i.typefile FROM icofiles i, usuari_grup u  WHERE i.userowner = u.userid and u.grupid = '",idgrupo,"'")
+
+  res = dbGetQuery(db, sql)
+  
+  if (nrow(res)>0){
+    return(res)
+  } else {
+    return(NULL)
+  }
+  
+}
+
+#----------------------------------------------------------
+# Retorna la lista de grupos de la aplicación
+# param idgroup <> '' -> todos los grupos menos el pasado
+# en caso contrario todos
+#----------------------------------------------------------
+getGrups <- function (db, idgroup=''){
+  
+  if(missing(db)) {
+    #Carreguem la db
+    db <- getMetadataDB()
+  }
+  
+  if (idgroup!=''){
+    sql=paste0("SELECT * FROM grups WHERE id<>",idgroup)
+  }
+  else{
+    sql="SELECT * FROM grups"
+  }
+  
+  res = dbGetQuery(db, sql)
+  
+  if (nrow(res)>0){
+    return(res)
+  } else {
+    return(NULL)
+  }
+  
+}
 
 sendQuery <- function(db, comanda){
   ## Converteixo a UTF-8 les comandes amb enc2utf8. 

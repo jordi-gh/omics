@@ -227,3 +227,10 @@ fitxer_str <- readr::read_file("C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\Gene e
 # User profiles
 db <- getMetadataDB()
 perfil <- getUserProfile(db,'jtorresz')
+
+#Problema colnames no existents
+objGEO <- getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GPL1111.soft",GSEMatrix=false)
+colnames(Table(objGEO))
+
+db <- getMetadataDB()
+res_roles <- getRoles(db,'no_admin')

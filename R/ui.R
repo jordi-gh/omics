@@ -8,7 +8,7 @@ shinyUI(fluidPage(
   includeScript("www/md5.js"),
   includeScript("www/passwdInputBinding.js"),
   
-  useShinyjs(),
+  shinyjs::useShinyjs(),
   
   fluidRow(align="center", h1("Omics-in-Cloud  ",img(src = "img/logoICO.png"))),
 
