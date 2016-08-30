@@ -203,10 +203,61 @@ getRoles <- function (db, type){
   }
   
   if (type=='no_admin'){
-    sql="SELECT nomrol,id FROM rols WHERE id<>1"
+    sql="SELECT * FROM rols WHERE id<>1"
   }
   else{
-    sql="SELECT nomrol,id FROM rols"
+    sql="SELECT * FROM rols"
+  }
+  
+  res = dbGetQuery(db, sql)
+  
+  if (nrow(res)>0){
+    return(res)
+  } else {
+    return(NULL)
+  }
+  
+}
+
+#----------------------------------------------------------
+# Retorna la lista de ficheros propiedad del grupo
+#----------------------------------------------------------
+getIcofilesGroup <- function (db, idgrupo){
+  
+  if(missing(db)) {
+    #Carreguem la db
+    db <- getMetadataDB()
+  }
+  
+  sql=paste0("SELECT i.uid,i.name,i.path,i.typefile FROM icofiles i, usuari_grup u  WHERE i.userowner = u.userid and u.grupid = '",idgrupo,"'")
+
+  res = dbGetQuery(db, sql)
+  
+  if (nrow(res)>0){
+    return(res)
+  } else {
+    return(NULL)
+  }
+  
+}
+
+#----------------------------------------------------------
+# Retorna la lista de grupos de la aplicación
+# param idgroup <> '' -> todos los grupos menos el pasado
+# en caso contrario todos
+#----------------------------------------------------------
+getGrups <- function (db, idgroup){
+  
+  if(missing(db)) {
+    #Carreguem la db
+    db <- getMetadataDB()
+  }
+  
+  if (idgroup!=''){
+    sql=paste0("SELECT * FROM grups WHERE id<>",idgroup)
+  }
+  else{
+    sql="SELECT * FROM grups"
   }
   
   res = dbGetQuery(db, sql)
