@@ -100,8 +100,18 @@ shinyServer(function(input, output, session) {
                        h4(paste0("Role    : ", USERPROFILE$Profile$nomrol))
                      ),
                    mainPanel(
-                     h1("Your data"),
-                     br()
+                     h2("Your data"),
+                     br(),
+                     tags$ul(h4("ICO files"),
+                             tags$li("Number of owner files: "),
+                             tags$li("Number of shared files with me: ")
+                     ),br(),
+                     tags$ul(h4("NCBI files"),
+                             tags$li("Number of GPL files: "),
+                             tags$li("Number of GSM files: "),
+                             tags$li("Number of GSE files: "),
+                             tags$li("Number of GDS files: ")
+                             )
                    )
                    )
           ),
@@ -544,7 +554,7 @@ shinyServer(function(input, output, session) {
     res_icofilesgrup <- getIcofilesGroup(db,USERPROFILE$Profile$grupuser)
     res_icofilesgrup
   })
-  
+
   output$tblfilesico = DT::renderDataTable({
         DT::datatable(filesData(),
                      options = list(orderClasses = TRUE,
