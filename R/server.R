@@ -9,6 +9,7 @@ library(couchDB)
 library(DT)
 library(RSQLite)
 library(gplots)
+library(PKI)
 
 ## Carregar variables d'entorn local
 source('ConfigLocal.R')
@@ -238,21 +239,29 @@ shinyServer(function(input, output, session) {
     res <- tryCatch({
       objGEO <- getGEO(filename=inFile$datapath)
     }, error = function(err){
-      message(paste('#Fitxer GEo invalid o format no reconegut: ',err,sep=''))
-      esGEO=FALSE
+      message(paste('#Fitxer GEO invalid o format no reconegut: ',err,sep=''))
+      #Compte: Assignació esGEO ha de ser global per tenir scopem fora de la funció
+      esGEO<<-FALSE 
     })  
     
     #Guardem a persistència ICO 
-    if(isTRUE(esGEO)){
+    if (esGEO==TRUE){
       #Es fitxer GEO
       guardaGEO(objGEO,inFile$name,inFile$datapath)
       #Retornem info de visualitzacio de l'objecte GEO en format dataframe 
       dfView(objGEO)
     } else {
-      #Fitxer no GEO
-      fitxer_str <- readr::read_file(inFile$datapath)
-      fitxer_json <- toJSON(fitxer_str)
+      #Fitxer no GEO. Recopilem informació
+      info <- file.info(inFile$datapath)
+      #Tamany en bytes
+      tamany <- info$size  
+      #Llegim en format raw el fitxer sencer
+      fitxer_raw <- readBin(con=inFile$datapath,"raw",tamany)
+      #Convertim a string de bytes hexadecimal i passem a JSON
+      fitxer_json <- toJSON(raw2hex(fitxer_raw,sep=''))
       guardaNoGEO(fitxer_json,inFile$name,inFile$datapath,1)
+      #Retornem info de visualització: Fitxer format desconegut
+      data.frame('File'=inFile$name,'Content'='Unknown format')
     }
   },options = list(
     scrollX = TRUE
