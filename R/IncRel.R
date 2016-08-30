@@ -2,7 +2,6 @@ library(GEOquery)
 library(GEOmetadb)
 library(RSQLite)
 
-
 source(file.path(gb_Rdir, 'IncCouch.R'))
 
 
@@ -99,6 +98,32 @@ guardaGEO <- function(objecte,filename='',path='',accession=NULL) {
   return(uid)
 }
 
+
+#Guardem fitxer format lliure ICO a Couch
+guardaNoGEO <- function(dataJSON,filename='',filenamepath='',userid='') {
+  #Carreguem la db
+  db <- getMetadataDB()
+  uid<-existeixNoGEO(filename,db)  
+  # Si l'hem trobat no cal afegir-lo
+  if (!is.null(uid)){
+    message(paste('Found uid: ',uid,sep=''))
+    return(uid)
+  }
+  ## Guardar fitxer a taula fitxers ICO
+  uid<-NoGeoACouch(dataJSON,filename) 
+  sql = 'INSERT INTO icofiles (uid,name,path,filename,loaddate,typefile,userowner) VALUES(:uid,:name,:path,:filename,:loaddate,:typefile,:userowner)'
+  valors<-data.frame(uid=uid,
+                     name=filename,
+                     path=filenamepath,
+                     filename=filename,
+                     loaddate=format(Sys.time(),format='%Y/%m/%d %H:%M:%S'),
+                     typefile='NA',
+                     userowner=userid
+  )
+  dbSendPreparedQuery(db, sql, bind.data = valors)
+  return(uid)
+}  
+
 nomGEO <- function(objGEO,filename, db){
   if(missing(db)) {
     #Carreguem la db
@@ -161,29 +186,25 @@ existeixGEO <- function(objGEO,nom, db){
   }
 }
 
-#Guardem fitxer format lliure ICO a Couch
-guardaNoGEO <- function(dataJSON,filename='',filenamepath='',userid='') {
-  #Carreguem la db
-  db <- getMetadataDB()
-  uid<-existeixNoGEO(filename,db)  
-  # Si l'hem trobat no cal afegir-lo
-  if (!is.null(uid)){
+existeixNoGEO <- function(nom, db){
+  if(missing(db)) {
+    #Carreguem la db
+    db <- getMetadataDB()
+  } 
+  #Mirem si tenim el fitxer a la BD JSON amb una query a la BD relacional de metadades 
+  nomreg=nom
+  sql = 'SELECT * FROM icofiles'
+  sql = paste(paste(paste(sql,' WHERE name = "',sep=''),nom,sep=''),'"',sep='')
+  res = dbGetQuery(db, sql)
+  #Si ja el tenim retornem uid 
+  if (nrow(res)>0){
+    uid=res$uid
     return(uid)
+  } else {
+    return(NULL)
   }
-  ## Guardar fitxer a taula fitxers ICO
-  uid<-NoGeoACouch(dataJSON,filename) 
-  sql = 'INSERT INTO icofiles (uid,name,path,filename,loaddate,typefile,userowner) VALUES(:uid,:name,:path,:filename,:loaddate,:typefile,:userowner)'
-  valors<-data.frame(uid=uid,
-                     name=filename,
-                     down=1,
-                     path=filenamepath,
-                     loaddate=format(Sys.time(),format='%Y/%m/%d %H:%M:%S'),
-                     typefile='NA',
-                     userowner=userid
-                     )
-  dbSendPreparedQuery(db, sql, bind.data = valors)
-  return(uid)
-}  
+}
+
 
 getUserProfile <- function (db,username){
   
