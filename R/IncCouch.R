@@ -42,3 +42,21 @@ GeoACouch <- function(objGEO,nom) {
   return (uid)
 }
 
+
+NoGeoACouch <- function(strJSON,nomfitxer) {
+  #Demanem un UUID a CouchDB. Ho podriem fer nosaltres amb llibraria R uuid
+  #Caldra veure si es una millor opcio
+  response <- fromJSON(getURL("http://localhost:5984/_uuids"))
+  uid=response$uuid
+  message(paste('DBG1: nou id: ',uid,sep=''))
+  #Preparem registre per inserir a BD
+  newreg<-toJSON(list(nom=nomfitxer,data=strJSON))
+  message('DBG2')
+  getURL(paste("http://localhost:5984/geodb/",uid,sep=""),
+         customrequest="PUT",
+         httpheader=c('Content-Type'='application/json'),
+         postfields=newreg)
+  #Retornem uid per guardar-lo a model relacional
+  message('DBG3')
+  return (uid)
+}
