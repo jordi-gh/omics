@@ -69,6 +69,8 @@ shinyServer(function(input, output, session) {
       
       #para el formulario de cambio de permisos
       res_grups <- getGrups(db,USERPROFILE$Profile$grupuser)
+      #Datos de la home
+      aDataHome <- getDataHome(db, USERPROFILE$Profile$username)
       
       # ---------------------------------------------------------------------  
       # TODA LA INTERFICIE AQUÍ
@@ -104,14 +106,14 @@ shinyServer(function(input, output, session) {
                      h2("Your data"),
                      br(),
                      tags$ul(h4("ICO files"),
-                             tags$li("Number of owner files: "),
-                             tags$li("Number of shared files with me: ")
+                             tags$li(paste0("Number of owner files: ",aDataHome['icoowner'])),
+                             tags$li(paste0("Number of shared files with me: ",aDataHome['icoshare']))
                      ),br(),
                      tags$ul(h4("NCBI files"),
-                             tags$li("Number of GPL files: "),
-                             tags$li("Number of GSM files: "),
-                             tags$li("Number of GSE files: "),
-                             tags$li("Number of GDS files: ")
+                             tags$li(paste0("Number of GPL files: ",aDataHome['gpl'])),
+                             tags$li(paste0("Number of GSM files: ",aDataHome['gsm'])),
+                             tags$li(paste0("Number of GSE files: ",aDataHome['gse'])),
+                             tags$li(paste0("Number of GDS files: ",aDataHome['gds']))
                              )
                    )
                    )
@@ -255,6 +257,13 @@ shinyServer(function(input, output, session) {
                                             )
                                           ),
                                    h4("Select file to share (row table):"),br(),
+                                   shinyjs::hidden(
+                                     div(
+                                       id = "no_data_msg",
+                                       h3("No files found"),
+                                       br()
+                                     )
+                                   ),
                                    dataTableOutput('tblfilesico'))
                                    )
                                 ),
@@ -583,6 +592,11 @@ shinyServer(function(input, output, session) {
   })
 
   output$tblfilesico = DT::renderDataTable({
+    
+        if (is.null(filesData())){
+          shinyjs::show("no_data_msg")
+        }
+    
         DT::datatable(filesData(),
                      options = list(orderClasses = TRUE,
                                     aLengthMenu = c(5, 10, 25),
@@ -596,20 +610,28 @@ shinyServer(function(input, output, session) {
     #fichero seleccionado
     uidselected <- filesData()[input$tblfilesico_rows_selected,]$uid
     
-    db <- getMetadataDB()
-    # borramos todos los derechos que habia sobre el fichero compartido
-    sql = paste0("DELETE FROM accessfiles WHERE uidfile = '",uidselected,"'")
-    result = dbGetQuery(db,sql)
+    if (!is.null(uidselected)){
+      
+      db <- getMetadataDB()
+      # borramos todos los derechos que habia sobre el fichero compartido
+      sql = paste0("DELETE FROM accessfiles WHERE uidfile = '",uidselected,"'")
+      result = dbGetQuery(db,sql)
+      
+      # compartimos el fichero con los grupos seleccionados
+       for (i in 1:length(idgrupsselected)){
+         sql = paste0("INSERT INTO accessfiles (uidfile,idgroup,dateaccess) VALUES ('",uidselected,"',",idgrupsselected[i],",date('now'))")
+         result = dbGetQuery(db,sql)
+       }
+      
+      #mensaje y reset de form
+      shinyjs::reset("sharefileform")
+      shinyjs::show("shared_msg")
+      
+    }
+    else{
+      shinyjs::reset("sharefileform")
+    }
     
-    # compartimos el fichero con los grupos seleccionados
-     for (i in 1:length(idgrupsselected)){
-       sql = paste0("INSERT INTO accessfiles (uidfile,idgroup,dateaccess) VALUES ('",uidselected,"',",idgrupsselected[i],",date('now'))")
-       result = dbGetQuery(db,sql)
-     }
-    
-    #mensaje y reset de form
-    shinyjs::reset("sharefileform")
-    shinyjs::show("shared_msg")
   })
   
   # ---------------------------------------------------------------------
