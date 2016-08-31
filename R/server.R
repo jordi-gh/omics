@@ -257,6 +257,13 @@ shinyServer(function(input, output, session) {
                                             )
                                           ),
                                    h4("Select file to share (row table):"),br(),
+                                   shinyjs::hidden(
+                                     div(
+                                       id = "no_data_msg",
+                                       h3("No files found"),
+                                       br()
+                                     )
+                                   ),
                                    dataTableOutput('tblfilesico'))
                                    )
                                 ),
@@ -583,6 +590,11 @@ shinyServer(function(input, output, session) {
   })
 
   output$tblfilesico = DT::renderDataTable({
+    
+        if (is.null(filesData())){
+          shinyjs::show("no_data_msg")
+        }
+    
         DT::datatable(filesData(),
                      options = list(orderClasses = TRUE,
                                     aLengthMenu = c(5, 10, 25),
