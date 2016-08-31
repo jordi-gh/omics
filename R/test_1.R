@@ -7,6 +7,7 @@ library(couchDB)
 library(DT)
 library(RSQLite)
 library(utils)
+library(wkb) 
 
 #SQLITE
 db <- dbConnect(SQLite(), 
@@ -217,12 +218,24 @@ objGEO <- getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GSE220.soft.gz",G
 pdExperimentNCBI <- pData(phenoData(objGEO[[1]]))  ##Peta: Error in objGEO[[1]] : this S4 class is not subsettable
 
 #Carregar file no GEO
-objNOGEO <- getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\Gene expression_ log2_test.xlsx",GSEMatrix=false) #Peta
-#Llegir en format binari
-fitxer <- readBin(con="C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\Gene expression_ log2_test.xlsx","raw")
-#LLegir utilitzant readr
-library(readr)
-fitxer_str <- readr::read_file("C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\Gene expression_ log2_test.xlsx")
+nomfitxer <- "C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\Gene expression_ log2_test.xlsx"
+nomfitxer <- "C:\\Jordi\\Master\\TFM\\DEV\\README.md"
+nomfitxer2 <- "C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\Gene expression_ log2_test_copia.xlsx"
+nomfitxer2 <- "C:\\Jordi\\Master\\TFM\\DEV\\README_copia.md"
+info <- file.info(nomfitxer)
+#mirem tamany
+info$size
+#Llegim en format raw el fitxer sencer
+fitxer_raw <- readBin(con=nomfitxer,"raw",info$size)
+#fitxer Hex
+fitxer_hex <- raw2hex(fitxer_raw,sep='')
+#Convertim a string de bytes hexadecimal i passem a JSON
+fitxer_json <- toJSON(fitxer_hex)
+#Conversió inversa
+#h <- sapply(seq(1, nchar(fitxer_hex), by=2), function(x) strtoi(substr(fitxer_hex, x, x+1),16))
+res_hex <- fromJSON(fitxer_json)
+res_raw <- wkb::hex2raw(res_hex)
+writeBin(res_raw,nomfitxer2)
 
 # User profiles
 db <- getMetadataDB()
@@ -234,3 +247,7 @@ colnames(Table(objGEO))
 
 db <- getMetadataDB()
 res_roles <- getRoles(db,'no_admin')
+
+
+#Download fitxer de couch
+res <- downloadNoGEO("C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\Gene expression_ log2_test_COPIA.xlsx","Gene expression_ log2_test.xlsx",3)
