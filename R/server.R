@@ -360,6 +360,8 @@ shinyServer(function(input, output, session) {
       #Convertim a string de bytes hexadecimal i passem a JSON
       fitxer_json <- toJSON(raw2hex(fitxer_raw,sep=''))
       guardaNoGEO(fitxer_json,inFile$name,inFile$datapath,1)
+      #DEBUG: Recuperem fitxer de Couch
+      #res<-downloadNoGEO("C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\downfile.xlsx",'Gene expression_ log2_test.xlsx',3)
       #Retornem info de visualització: Fitxer format desconegut
       data.frame('File'=inFile$name,'Content'='Unknown format')
     }
