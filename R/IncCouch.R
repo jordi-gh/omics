@@ -48,15 +48,26 @@ NoGeoACouch <- function(strJSON,nomfitxer) {
   #Caldra veure si es una millor opcio
   response <- fromJSON(getURL("http://localhost:5984/_uuids"))
   uid=response$uuid
-  message(paste('DBG1: nou id: ',uid,sep=''))
   #Preparem registre per inserir a BD
-  newreg<-toJSON(list(nom=nomfitxer,data=strJSON))
-  message('DBG2')
+  newreg<-toJSON(list(nom=nomfitxer,rawdata=strJSON))
   getURL(paste("http://localhost:5984/geodb/",uid,sep=""),
          customrequest="PUT",
          httpheader=c('Content-Type'='application/json'),
          postfields=newreg)
   #Retornem uid per guardar-lo a model relacional
-  message('DBG3')
   return (uid)
 }
+
+#Llegir un fitxer No GEO de CouchDB 
+CouchANoGEO <- function(uid){
+  response <- getURL(paste("http://localhost:5984/geodb/",uid,sep=""))
+  #Retornem el rawdata del fitxer en format JSON
+  llistareg <- fromJSON(response)
+  if (is.null(llistareg)){
+      return(FALSE)
+  }
+  strJSON <- llistareg['rawdata']
+  return(strJSON)
+}
+
+
