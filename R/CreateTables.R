@@ -49,7 +49,7 @@ dbSendQuery(conn = db,
 ## Crear taules d'usuaris, grups i rols
 dbSendQuery(conn = db,
             "CREATE TABLE rols
-            (id INT PRIMARY KEY AUTOINCREMENT,
+            (id INTEGER PRIMARY KEY AUTOINCREMENT,
             nomrol TEXT,
             descripcio TEXT
             )
@@ -63,7 +63,7 @@ dbSendQuery(conn = db,
             ")
 dbSendQuery(conn = db,
             "CREATE TABLE usuaris
-            (id INT PRIMARY KEY AUTOINCREMENT,
+            (id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT,
             pwd TEXT,
             nom TEXT,
@@ -78,7 +78,7 @@ dbSendQuery(conn = db,
             ")
 dbSendQuery(conn = db,
             "CREATE TABLE grups
-            (id INT PRIMARY KEY AUTOINCREMENT,
+            (id INTEGER PRIMARY KEY AUTOINCREMENT,
             nomgrup TEXT,
             descripcio TEXT
             )
@@ -99,7 +99,7 @@ dbSendQuery(conn = db,
 
 dbSendQuery(conn = db,
             "CREATE TABLE accessfiles
-            (id INT PRIMARY KEY AUTOINCREMENT,
+            (id INTEGER PRIMARY KEY AUTOINCREMENT,
              uidfile TEXT,
              idgroup INT,  
              dateaccess TEXT,
