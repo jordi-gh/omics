@@ -608,20 +608,28 @@ shinyServer(function(input, output, session) {
     #fichero seleccionado
     uidselected <- filesData()[input$tblfilesico_rows_selected,]$uid
     
-    db <- getMetadataDB()
-    # borramos todos los derechos que habia sobre el fichero compartido
-    sql = paste0("DELETE FROM accessfiles WHERE uidfile = '",uidselected,"'")
-    result = dbGetQuery(db,sql)
+    if (!is.null(uidselected)){
+      
+      db <- getMetadataDB()
+      # borramos todos los derechos que habia sobre el fichero compartido
+      sql = paste0("DELETE FROM accessfiles WHERE uidfile = '",uidselected,"'")
+      result = dbGetQuery(db,sql)
+      
+      # compartimos el fichero con los grupos seleccionados
+       for (i in 1:length(idgrupsselected)){
+         sql = paste0("INSERT INTO accessfiles (uidfile,idgroup,dateaccess) VALUES ('",uidselected,"',",idgrupsselected[i],",date('now'))")
+         result = dbGetQuery(db,sql)
+       }
+      
+      #mensaje y reset de form
+      shinyjs::reset("sharefileform")
+      shinyjs::show("shared_msg")
+      
+    }
+    else{
+      shinyjs::reset("sharefileform")
+    }
     
-    # compartimos el fichero con los grupos seleccionados
-     for (i in 1:length(idgrupsselected)){
-       sql = paste0("INSERT INTO accessfiles (uidfile,idgroup,dateaccess) VALUES ('",uidselected,"',",idgrupsselected[i],",date('now'))")
-       result = dbGetQuery(db,sql)
-     }
-    
-    #mensaje y reset de form
-    shinyjs::reset("sharefileform")
-    shinyjs::show("shared_msg")
   })
   
   # ---------------------------------------------------------------------
