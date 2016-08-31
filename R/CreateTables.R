@@ -56,8 +56,9 @@ dbSendQuery(conn = db,
             ")
 dbSendQuery(conn = db,
             "CREATE TABLE usuari_grup
-            (userid INT PRIMARY KEY,
-            grupid TEXT
+            (userid INT,
+            grupid TEXT,
+            CONSTRAINT usergrup_unique UNIQUE (userid,grupid)
             )
             ")
 dbSendQuery(conn = db,
