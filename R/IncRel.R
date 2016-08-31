@@ -315,6 +315,53 @@ getGrups <- function (db, idgroup=''){
   
 }
 
+#----------------------------------------------------------
+# Retorna numero de ficheros para mostrarlo en la Home
+#----------------------------------------------------------
+getDataHome <- function (db, username){
+  
+  if(missing(db)) {
+    #Carreguem la db
+    db <- getMetadataDB()
+  }
+  
+  aDataHome<-array()
+  
+  #Datos de ficheros NCBI
+  sql="select count(1) as gdscount from gds"
+  res = dbGetQuery(db, sql)
+  aDataHome['gds'] <- res$gdscount
+  sql="select count(1) as gplcount from gpl"
+  res = dbGetQuery(db, sql)
+  aDataHome['gpl'] <- res$gplcount
+  sql="select count(1) as gsmcount from gsm"
+  res = dbGetQuery(db, sql)
+  aDataHome['gsm'] <- res$gsmcount
+  sql="select count(1) as gsecount from gse"
+  res = dbGetQuery(db, sql)
+  aDataHome['gse'] <- res$gsecount
+  
+  #Datos de ficheros ICO
+  #Numero de ficheros de mi grupo de trabajo
+  #La subquery saca todos los usuarios del grupo
+  sql=paste0("select count(1) as icoownercount
+              from icofiles
+              where userowner in (
+                select userid from usuari_grup where grupid in (select distinct ug.grupid from 	usuari_grup ug, usuaris u where ug.userid = u.id and u.username = '",username,"')
+              )")
+  res = dbGetQuery(db, sql)
+  aDataHome['icoowner'] <- res$icoownercount
+  
+  #Numero de ficheros que han compartido al grupo del usuario pasado como parametro
+  #Recordar que en accessfiles no está el grupo del owner del fichero
+  sql=paste0("select count(1) as icosharecount from accessfiles where idgroup in (
+              select distinct ug.grupid from 	usuari_grup ug, usuaris u where ug.userid = u.id and u.username = '",username,"')")
+  res = dbGetQuery(db, sql)
+  aDataHome['icoshare'] <- res$icosharecount
+  
+  return(aDataHome)
+}
+
 sendQuery <- function(db, comanda){
   ## Converteixo a UTF-8 les comandes amb enc2utf8. 
   ## No he trobat com fer-ho per defecte tot i tenir RStudio a UTF-8

@@ -69,6 +69,8 @@ shinyServer(function(input, output, session) {
       
       #para el formulario de cambio de permisos
       res_grups <- getGrups(db,USERPROFILE$Profile$grupuser)
+      #Datos de la home
+      aDataHome <- getDataHome(db, USERPROFILE$Profile$username)
       
       # ---------------------------------------------------------------------  
       # TODA LA INTERFICIE AQUÍ
@@ -104,14 +106,14 @@ shinyServer(function(input, output, session) {
                      h2("Your data"),
                      br(),
                      tags$ul(h4("ICO files"),
-                             tags$li("Number of owner files: "),
-                             tags$li("Number of shared files with me: ")
+                             tags$li(paste0("Number of owner files: ",aDataHome['icoowner'])),
+                             tags$li(paste0("Number of shared files with me: ",aDataHome['icoshare']))
                      ),br(),
                      tags$ul(h4("NCBI files"),
-                             tags$li("Number of GPL files: "),
-                             tags$li("Number of GSM files: "),
-                             tags$li("Number of GSE files: "),
-                             tags$li("Number of GDS files: ")
+                             tags$li(paste0("Number of GPL files: ",aDataHome['gpl'])),
+                             tags$li(paste0("Number of GSM files: ",aDataHome['gsm'])),
+                             tags$li(paste0("Number of GSE files: ",aDataHome['gse'])),
+                             tags$li(paste0("Number of GDS files: ",aDataHome['gds']))
                              )
                    )
                    )
