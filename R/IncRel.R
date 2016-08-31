@@ -1,6 +1,7 @@
 library(GEOquery)
 library(GEOmetadb)
 library(RSQLite)
+library(wkb) 
 
 source(file.path(gb_Rdir, 'IncCouch.R'))
 
@@ -103,9 +104,10 @@ guardaGEO <- function(objecte,filename='',path='',accession=NULL) {
 guardaNoGEO <- function(dataJSON,filename='',filenamepath='',userid='') {
   #Carreguem la db
   db <- getMetadataDB()
-  uid<-existeixNoGEO(filename,db)  
+  info<-existeixNoGEO(filename,db)  
   # Si l'hem trobat no cal afegir-lo
-  if (!is.null(uid)){
+  if (!is.null(info)){
+    uid=info$uid
     message(paste('Found uid: ',uid,sep=''))
     return(uid)
   }
@@ -123,6 +125,60 @@ guardaNoGEO <- function(dataJSON,filename='',filenamepath='',userid='') {
   dbSendPreparedQuery(db, sql, bind.data = valors)
   return(uid)
 }  
+
+# Busquem Filename a metadades i si existeix elrecuperem fitxer sencer de Couch
+recuperaNoGEO <- function(filename,userid){
+  #Carreguem la db
+  db <- getMetadataDB()
+  info<-existeixNoGEO(filename)  
+  # Si no l'hem trobat sortim
+  if (is.null(info)){
+    message(paste('Not found filename: ',filename,sep=''))
+    return(list(FALSE, 'Not found'))
+  }
+  #Comprovem si usuari hi té accés
+  bAcces=FALSE
+  #Si és owner, no cal mirar res més
+  if(info$userowner==userid){
+    bAcces=TRUE
+  } else {
+    #TODO: utilitzar funcions d'acces per grups
+    bAcces=TRUE
+  }
+  if(isTRUE(bAcces)){
+    dataJSON <- CouchANoGEO(info$uid)
+    if (dataJSON==FALSE){
+       return(list(FALSE,'Unknown error'))  
+    }
+      
+  } else {
+    return(list(FALSE,'Unauthorized'))
+  }
+  return(list(TRUE, dataJSON))
+}
+
+#Si nom fitxer el tenim a COuch, descarregar i guardar-lo al filepath especificat
+downloadNoGEO <- function(downpath,name,userid){
+  #Retorna una llista de 2 elements: 1=True/False, 2=registre Couch/Missatge Error
+  res <- recuperaNoGEO(name,userid)
+  if(!is.null(res) && is.list(res)){
+    if (isTRUE(res[[1]])){
+      fitxer_json <- res[[2]]
+      res_hex <- fromJSON(fitxer_json) ## CASCA AQUI: Error in file(con, "r") : cannot open the connection
+      res_raw <- wkb::hex2raw(res_hex)
+      writeBin(res_raw,downpath)
+      message(paste('Downloaded file: ',downpath,sep=''))
+      return(TRUE)
+    } else {
+      message(paste('Could not download file: ',res[[2]],sep=''))
+      return(FALSE)
+    }
+  } else {
+    return (FALSE)
+  }
+}
+
+
 
 nomGEO <- function(objGEO,filename, db){
   if(missing(db)) {
@@ -194,12 +250,11 @@ existeixNoGEO <- function(nom, db){
   #Mirem si tenim el fitxer a la BD JSON amb una query a la BD relacional de metadades 
   nomreg=nom
   sql = 'SELECT * FROM icofiles'
-  sql = paste(paste(paste(sql,' WHERE name = "',sep=''),nom,sep=''),'"',sep='')
+  sql = paste0(paste0(paste0(sql,' WHERE name = "'),nom),'"')
   res = dbGetQuery(db, sql)
-  #Si ja el tenim retornem uid 
+  #Si el tenim retornem registre sencer
   if (nrow(res)>0){
-    uid=res$uid
-    return(uid)
+    return(res)  
   } else {
     return(NULL)
   }
