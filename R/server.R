@@ -322,6 +322,8 @@ shinyServer(function(input, output, session) {
   # Analisis2: GSM Bins
   # --------------------------------------------------------------------- 
   output$distPlot <- renderPlot({
+    destdir = file.path(gb_Rdir, 'BD')
+    
     ExperimentNCBI <- getGEO("GSM320590", destdir = destdir)
     cols <- c("VALUE")
     
