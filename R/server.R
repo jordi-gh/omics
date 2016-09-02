@@ -328,10 +328,10 @@ shinyServer(function(input, output, session) {
     cols <- c("VALUE")
     
     Value <- Table(ExperimentNCBI)[,cols]
-    bins <- seq(min(Value), max(Value), length.out = input$bins + 1)
+    bins <- seq(min(as.double(Value)), max(as.double(Value)), length.out = input$bins + 1)
     
     # draw the histogram with the specified number of bins
-    hist(Value, breaks = bins, col = 'red', border = 'white',
+    hist(as.double(Value), breaks = bins, col = 'red', border = 'white',
          main = 'GSM320590 values', labels = TRUE)
   })
   
