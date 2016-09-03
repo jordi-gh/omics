@@ -260,6 +260,34 @@ existeixNoGEO <- function(nom, db){
   }
 }
 
+inDataCatalog <- function(nom, type, db){
+  if(missing(db)) {
+    #Carreguem la db
+    db <- getMetadataDB()
+  } 
+  #Mirem si tenim el fitxer a la BD JSON amb una query a la BD relacional de metadades
+  nomreg=nom
+  switch(toupper(type),
+         'GSM'={tablename='gsm'},
+         'GPL'={tablename='gpl'},
+         'GSE'={tablename='gse'},
+         'GDS'={tablename='gds'},
+         'EXPRESSIONSET'={
+           tablename='gse'
+           paste(nomreg,'_matrix',sep='')
+         },
+         stop('Invalid GEO Object')
+  ) 
+  sql = paste('SELECT * FROM ',tablename,sep='')
+  sql = paste(paste(paste(sql,' WHERE name = "',sep=''),nomreg,sep=''),'"',sep='')
+  res = dbGetQuery(db, sql)
+  #Retornem bool TRUE si és al catàleg ICO, FALSE si no hi és.
+  if (nrow(res)>0){
+    return(TRUE)  
+  } else {
+    return(FALSE)
+  }
+}
 
 #----------------------------------------------------------
 # Retorna los datos de un usuario a partir del username

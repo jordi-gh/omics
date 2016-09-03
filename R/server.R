@@ -125,7 +125,7 @@ shinyServer(function(input, output, session) {
                      "Data Catalog", widths = c(2, 10),
                      tabPanel("ICO data", id = "icodata"),
                      
-                     tabPanel("Other data", id = "otherdata",
+                     tabPanel("NCBI data", id = "ncbidata",
                               sidebarLayout(
                                 sidebarPanel(
                                   textInput("searchexperiment", label = h3("Search GPL"), value = "Enter text..."),
@@ -137,9 +137,9 @@ shinyServer(function(input, output, session) {
                                 
                                 mainPanel(
                                   textOutput("salidaprueba"),
-                                  htmlOutput("descripcionplatform"),
-                                  htmlOutput("descripcionserie"),
-                                  htmlOutput("descripcionsample")
+                                  dataTableOutput("metadataplatform"),
+                                  dataTableOutput("metadataserie"),
+                                  dataTableOutput("metadatasample")
                                 )
                               )
                      )
@@ -461,8 +461,7 @@ shinyServer(function(input, output, session) {
     
   })
   
-  
-  output$descripcionplatform <- renderText({
+  output$metadataplatform <- renderDataTable({
     if (is.null(input$searchexperiment) || input$searchexperiment == "Enter text..."){
       return()
     }
@@ -470,19 +469,20 @@ shinyServer(function(input, output, session) {
     sql <- paste("SELECT *",
                  " FROM gpl",
                  " WHERE gpl.gpl = '",input$searchexperiment,"'", sep="")
-    rs <- dbGetQuery(con,sql)
+    dataNCBI <- dbGetQuery(con,sql)
     
-    str0 <-"<br/>"
-    str1 <-paste("GPL: ",rs$gpl)
-    str2 <-paste("ID: ",rs$ID)
-    str3 <-paste("Title: ",rs$title)
-    str4 <-paste("Status: ",rs$status)
-    str5 <-paste("Date: ",rs$submission_date)
-    
-    HTML(paste(str0, str1, str2, str3, str4, str5, sep = '<br/>'))
+    db <- getMetadataDB()
+    incatalegICO <- inDataCatalog(dataNCBI$gpl, 'GPL', db)
+    if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
+    else incatalegICOtext <- 'No'
+
+    dataNCBI["Already upload to ICOcloud?"] <- incatalegICOtext #Add column
+    dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
+    names(dataNCBI) <- (paste(input$searchexperiment," metadata")) #Column title
+    return(dataNCBI)
   })
   
-  output$descripcionserie <- renderText({
+  output$metadataserie <- renderDataTable({
     if (is.null(input$dataset) || input$dataset == "Select DataSet Serie"){
       return()
     }
@@ -490,19 +490,20 @@ shinyServer(function(input, output, session) {
     sql <- paste("SELECT *",
                  " FROM gse",
                  " WHERE gse.gse = '",input$dataset,"'", sep="")
-    rs <- dbGetQuery(con,sql)
+    dataNCBI <- dbGetQuery(con,sql)
     
-    str0 <-"<br/>"
-    str1 <-paste("GSE: ",rs$gse)
-    str2 <-paste("ID: ",rs$ID)
-    str3 <-paste("Title: ",rs$title)
-    str4 <-paste("Status: ",rs$status)
-    str5 <-paste("Date: ",rs$submission_date)
+    db <- getMetadataDB()
+    incatalegICO <- inDataCatalog(dataNCBI$gse, 'GSE', db)
+    if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
+    else incatalegICOtext <- 'No'
     
-    HTML(paste(str0, str1, str2, str3, str4, str5, sep = '<br/>'))
+    dataNCBI["Already upload to ICOcloud?"] <- incatalegICOtext #Add column
+    dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
+    names(dataNCBI) <- (paste(input$dataset," metadata")) #Column title
+    return(dataNCBI)
   })
   
-  output$descripcionsample <- renderText({
+  output$metadatasample <- renderDataTable({
     if (is.null(input$sample) || input$sample == "Select DataSet Sample"){
       return()
     }
@@ -510,16 +511,17 @@ shinyServer(function(input, output, session) {
     sql <- paste("SELECT *",
                  " FROM gsm",
                  " WHERE gsm.gsm = '",input$sample,"'", sep="")
-    rs <- dbGetQuery(con,sql)
+    dataNCBI <- dbGetQuery(con,sql)
     
-    str0 <-"<br/>"
-    str1 <-paste("GSM: ",rs$gsm)
-    str2 <-paste("ID: ",rs$ID)
-    str3 <-paste("Title: ",rs$title)
-    str4 <-paste("Status: ",rs$status)
-    str5 <-paste("Date: ",rs$submission_date)
+    db <- getMetadataDB()
+    incatalegICO <- inDataCatalog(dataNCBI$gsm, 'GSM', db)
+    if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
+    else incatalegICOtext <- 'No'
     
-    HTML(paste(str0, str1, str2, str3, str4, str5, sep = '<br/>'))
+    dataNCBI["Already upload to ICOcloud?"] <- incatalegICOtext #Add column
+    dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
+    names(dataNCBI) <- (paste(input$sample," metadata")) #Column title
+    return(dataNCBI)
   })
   # ---------------------------------------------------------------------
   # FIN Data Catalog NCBI
