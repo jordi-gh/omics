@@ -250,4 +250,4 @@ res_roles <- getRoles(db,'no_admin')
 
 
 #Download fitxer de couch
-res <- downloadNoGEO("C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\Gene expression_ log2_test_COPIA.xlsx","Gene expression_ log2_test.xlsx",3)
+res <- downloadICO("C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\Gene expression_ log2_test_COPIA.xlsx","Gene expression_ log2_test.xlsx",3)

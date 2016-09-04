@@ -43,7 +43,7 @@ GeoACouch <- function(objGEO,nom) {
 }
 
 
-NoGeoACouch <- function(strJSON,nomfitxer) {
+ICOACouch <- function(strJSON,nomfitxer) {
   #Demanem un UUID a CouchDB. Ho podriem fer nosaltres amb llibraria R uuid
   #Caldra veure si es una millor opcio
   response <- fromJSON(getURL("http://localhost:5984/_uuids"))
@@ -58,8 +58,8 @@ NoGeoACouch <- function(strJSON,nomfitxer) {
   return (uid)
 }
 
-#Llegir un fitxer No GEO de CouchDB 
-CouchANoGEO <- function(uid){
+#Llegir un fitxer ICO de CouchDB 
+CouchAICO <- function(uid){
   response <- getURL(paste("http://localhost:5984/geodb/",uid,sep=""))
   #Retornem el rawdata del fitxer en format JSON
   llistareg <- fromJSON(response)

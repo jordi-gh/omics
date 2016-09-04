@@ -101,10 +101,10 @@ guardaGEO <- function(objecte,filename='',path='',accession=NULL) {
 
 
 #Guardem fitxer format lliure ICO a Couch
-guardaNoGEO <- function(dataJSON,filename='',filenamepath='',userid='') {
+guardaICO <- function(dataJSON,filename='',filenamepath='',userid='') {
   #Carreguem la db
   db <- getMetadataDB()
-  info<-existeixNoGEO(filename,db)  
+  info<-existeixICO(filename,db)  
   # Si l'hem trobat no cal afegir-lo
   if (!is.null(info)){
     uid=info$uid
@@ -112,7 +112,7 @@ guardaNoGEO <- function(dataJSON,filename='',filenamepath='',userid='') {
     return(uid)
   }
   ## Guardar fitxer a taula fitxers ICO
-  uid<-NoGeoACouch(dataJSON,filename) 
+  uid<-ICOACouch(dataJSON,filename) 
   sql = 'INSERT INTO icofiles (uid,name,path,filename,loaddate,typefile,userowner) VALUES(:uid,:name,:path,:filename,:loaddate,:typefile,:userowner)'
   valors<-data.frame(uid=uid,
                      name=filename,
@@ -127,10 +127,10 @@ guardaNoGEO <- function(dataJSON,filename='',filenamepath='',userid='') {
 }  
 
 # Busquem Filename a metadades i si existeix elrecuperem fitxer sencer de Couch
-recuperaNoGEO <- function(filename,userid){
+recuperaICO <- function(filename,userid){
   #Carreguem la db
   db <- getMetadataDB()
-  info<-existeixNoGEO(filename)  
+  info<-existeixICO(filename)  
   # Si no l'hem trobat sortim
   if (is.null(info)){
     message(paste('Not found filename: ',filename,sep=''))
@@ -146,7 +146,7 @@ recuperaNoGEO <- function(filename,userid){
     bAcces=TRUE
   }
   if(isTRUE(bAcces)){
-    dataJSON <- CouchANoGEO(info$uid)
+    dataJSON <- CouchAICO(info$uid)
     if (dataJSON==FALSE){
        return(list(FALSE,'Unknown error'))  
     }
@@ -158,9 +158,9 @@ recuperaNoGEO <- function(filename,userid){
 }
 
 #Si nom fitxer el tenim a COuch, descarregar i guardar-lo al filepath especificat
-downloadNoGEO <- function(downpath,name,userid){
+downloadICO <- function(downpath,name,userid){
   #Retorna una llista de 2 elements: 1=True/False, 2=registre Couch/Missatge Error
-  res <- recuperaNoGEO(name,userid)
+  res <- recuperaICO(name,userid)
   if(!is.null(res) && is.list(res)){
     if (isTRUE(res[[1]])){
       fitxer_json <- res[[2]]
@@ -242,7 +242,7 @@ existeixGEO <- function(objGEO,nom, db){
   }
 }
 
-existeixNoGEO <- function(nom, db){
+existeixICO <- function(nom, db){
   if(missing(db)) {
     #Carreguem la db
     db <- getMetadataDB()
