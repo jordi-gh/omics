@@ -445,6 +445,45 @@ getDataHome <- function (db, username){
   return(aDataHome)
 }
 
+#----------------------------------------------------------
+# Retorna los ficheros propios y compartidos para el catalogo ICO
+#----------------------------------------------------------
+getCatalogoICO <- function (db, username, type){
+  
+  if(missing(db)) {
+    #Carreguem la db
+    db <- getMetadataDB()
+  }
+  
+  if (type=='owner'){
+    #Ficheros de mi grupo de trabajo
+    #La subquery saca todos los usuarios del grupo
+    sql=paste0("select i.filename, i.loaddate, i.typefile , u.username as owner
+              from icofiles i
+              ,    usuaris u
+              where i.userowner in (
+                select userid from usuari_grup where grupid in (select distinct ug.grupid from 	usuari_grup ug, usuaris u where ug.userid = u.id and u.username = '",username,"')
+              ) 
+             and i.userowner = u.id")
+    res = dbGetQuery(db, sql)
+  }
+  
+  if (type=='shared'){
+    #Ficheros que han compartido al grupo del usuario pasado como parametro
+    #Recordar que en accessfiles no está el grupo del owner del fichero
+    sql=paste0("select i.filename, i.loaddate, i.typefile , u.username as owner
+              from icofiles i
+              ,    usuaris u
+              where i.uid in (select uidfile
+              from accessfiles where idgroup in (
+              select distinct ug.grupid from 	usuari_grup ug, usuaris u where ug.userid = u.id and u.username = '",username,"')) 
+              and i.userowner = u.id")
+    res = dbGetQuery(db, sql)
+  }
+  
+  return(res)
+}
+
 sendQuery <- function(db, comanda){
   ## Converteixo a UTF-8 les comandes amb enc2utf8. 
   ## No he trobat com fer-ho per defecte tot i tenir RStudio a UTF-8

@@ -123,7 +123,25 @@ shinyServer(function(input, output, session) {
           tabPanel("Data Catalog", icon = icon("fa fa-th"),
                    navlistPanel(
                      "Data Catalog", widths = c(2, 10),
-                     tabPanel("ICO data", id = "icodata"),
+                     tabPanel("ICO data", id = "icodata",
+                              sidebarLayout(
+                                sidebarPanel(
+                                  h3('New ICO file'),br(),
+                                  radioButtons('typefileico', 'Select type file', choices = c('gpl','gsm','gse','gds')),
+                                  fileInput('file1', h4('Choose file to upload'))
+                                ),
+                                
+                                mainPanel(
+                                  tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
+                                  dataTableOutput('contents'),br(),
+                                  h5('Files owner'),
+                                  dataTableOutput('filesicoowner'),
+                                  br(),
+                                  h5('Files shared with me'),
+                                  dataTableOutput('filesicoshared')
+                                )
+                            )
+                     ),
                      
                      tabPanel("NCBI data", id = "ncbidata",
                               sidebarLayout(
@@ -147,30 +165,30 @@ shinyServer(function(input, output, session) {
           ),
           
           # Load Data
-          tabPanel("Load Data", icon = icon("fa fa-database"),
-                   navlistPanel(
-                     "Load Data", widths = c(2, 10),
-                     tabPanel("NCBI", icon = icon("fa fa-cloud-download"), id = "ncbi",
-                              sidebarLayout(
-                                sidebarPanel(textInput("experimentupload", label = h3("Experiment name"), value = "Enter text..."),
-                                             actionButton("submitexperiment", "Download experiment")),
-                                mainPanel(
-                                  tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
-                                  dataTableOutput("experiment")
-                                )
-                              )
-                     ),
-                     tabPanel("ICO", icon = icon("fa fa-cloud-upload"), id = "ico",
-                              sidebarLayout(
-                                sidebarPanel(fileInput('file1', h3('Choose file to upload'))),
-                                mainPanel(
-                                  tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
-                                  dataTableOutput('contents')
-                                )
-                              )
-                     )
-                   )
-          ),
+          # tabPanel("Load Data", icon = icon("fa fa-database"),
+          #          navlistPanel(
+          #            "Load Data", widths = c(2, 10),
+          #            tabPanel("NCBI", icon = icon("fa fa-cloud-download"), id = "ncbi",
+          #                     sidebarLayout(
+          #                       sidebarPanel(textInput("experimentupload", label = h3("Experiment name"), value = "Enter text..."),
+          #                                    actionButton("submitexperiment", "Download experiment")),
+          #                       mainPanel(
+          #                         tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
+          #                         dataTableOutput("experiment")
+          #                       )
+          #                     )
+          #            ),
+          #            tabPanel("ICO", icon = icon("fa fa-cloud-upload"), id = "ico",
+          #                     sidebarLayout(
+          #                       sidebarPanel(fileInput('file1', h3('Choose file to upload'))),
+          #                       mainPanel(
+          #                         tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
+          #                         dataTableOutput('contents')
+          #                       )
+          #                     )
+          #            )
+          #          )
+          # ),
           
           # Análisis
           tabPanel("Analysis", icon = icon("fa fa-bar-chart"),
@@ -404,6 +422,37 @@ shinyServer(function(input, output, session) {
       dfView(ExperimentNCBI)
     }
     
+  })
+  
+  # ---------------------------------------------------------------------
+  # Data Catalog ICO
+  # ---------------------------------------------------------------------
+  dataFilesShared <- reactive({
+    dataShared <- getCatalogoICO(db, USERPROFILE$Profile$username,'shared')
+    dataShared
+  })
+  
+  dataFilesOWner <- reactive({
+    dataOwner <- getCatalogoICO(db, USERPROFILE$Profile$username,'owner')
+    dataOwner
+  })
+  
+  output$filesicoowner = DT::renderDataTable({
+    
+    DT::datatable(dataFilesOWner(),
+                  options = list(orderClasses = TRUE,
+                                 aLengthMenu = c(5, 10, 25),
+                                 pageLength = 5)
+                  , selection = 'none')
+  })
+  
+  output$filesicoshared = DT::renderDataTable({
+    
+    DT::datatable(dataFilesShared(),
+                  options = list(orderClasses = TRUE,
+                                 aLengthMenu = c(5, 10, 25),
+                                 pageLength = 5)
+                  , selection = 'none')
   })
   
   # ---------------------------------------------------------------------
