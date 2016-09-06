@@ -50,12 +50,12 @@ ICOACouch <- function(strJSON,nomfitxer) {
   uid=response$uuid
   #Preparem registre per inserir a BD
   newreg<-toJSON(list(nom=nomfitxer,rawdata=strJSON))
-  getURL(paste("http://localhost:5984/geodb/",uid,sep=""),
+  response <- fromJSON(getURL(paste("http://localhost:5984/geodb/",uid,sep=""),
          customrequest="PUT",
          httpheader=c('Content-Type'='application/json'),
-         postfields=newreg)
-  #Retornem uid per guardar-lo a model relacional
-  return (uid)
+         postfields=newreg))
+  #Retornem dades registre guardar-les a model relacional
+  return (response)
 }
 
 #Llegir un fitxer ICO de CouchDB 
@@ -70,4 +70,18 @@ CouchAICO <- function(uid){
   return(strJSON)
 }
 
+#Eliminar document de couch per uid
+eliminaCouch <- function(uid=NULL,rev=NULL){
+  #Si no tenim uid definit no fem res: PODRIEM ELIMINAR DB SENCERA
+  if(is.null(uid)){
+    return(FALSE)
+  }
+  url<-paste0("http://localhost:5984/geodb/",uid)
+  #Per eliminar hem d'afegir la revisió del document
+  url<-paste(url,rev,sep='?rev=')
+  response <- getURL(url,
+         customrequest="DELETE",
+         httpheader=c('Content-Type'='application/json'))
+  return(fromJSON(response))
+}
 
