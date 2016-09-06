@@ -132,13 +132,15 @@ shinyServer(function(input, output, session) {
                                 ),
                                 
                                 mainPanel(
-                                  tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
-                                  dataTableOutput('contents'),br(),
-                                  h5('Files owner'),
-                                  dataTableOutput('filesicoowner'),
-                                  br(),
-                                  h5('Files shared with me'),
-                                  dataTableOutput('filesicoshared')
+                                  #tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
+                                  #bsModal("modalExample", "Data Table", "file1", size = "large", dataTableOutput("contents")),
+                                  #dataTableOutput('contents'),br(),
+                                  # h5('Files owner'),
+                                  # dataTableOutput('filesicoowner'),
+                                  # br(),
+                                  # h5('Files shared with me'),
+                                  # dataTableOutput('filesicoshared')
+                                  uiOutput('mytabsicofiles')
                                 )
                             )
                      ),
@@ -361,51 +363,7 @@ shinyServer(function(input, output, session) {
     hist(as.double(Value), breaks = bins, col = 'red', border = 'white',
          main = 'GSM320590 values', labels = TRUE)
   })
-  
-  # ---------------------------------------------------------------------  
-  # Load ICO
-  # ---------------------------------------------------------------------  
-  output$contents <- renderDataTable({
-    
-    inFile <- input$file1
-    
-    if (is.null(inFile))
-      return(NULL)
-    
-    #Intentem obrir en Format GEO. Si no ho és mostrem avís abans de continuar
-    esGEO=TRUE
-    res <- tryCatch({
-      objGEO <- getGEO(filename=inFile$datapath)
-    }, error = function(err){
-      message(paste('#Fitxer GEO invalid o format no reconegut: ',err,sep=''))
-      #Compte: Assignació esGEO ha de ser global per tenir scopem fora de la funció
-      esGEO<<-FALSE 
-    })  
-    
-    #Guardem a persistència ICO 
-    if (esGEO==TRUE){
-      #Es fitxer GEO
-      guardaGEO(objGEO,inFile$name,inFile$datapath)
-      #Retornem info de visualitzacio de l'objecte GEO en format dataframe 
-      dfView(objGEO)
-    } else {
-      #Fitxer no GEO. Recopilem informació
-      info <- file.info(inFile$datapath)
-      #Tamany en bytes
-      tamany <- info$size  
-      #Llegim en format raw el fitxer sencer
-      fitxer_raw <- readBin(con=inFile$datapath,"raw",tamany)
-      #Convertim a string de bytes hexadecimal i passem a JSON
-      fitxer_json <- toJSON(raw2hex(fitxer_raw,sep=''))
-      guardaNoGEO(fitxer_json,inFile$name,inFile$datapath,1)
-      #DEBUG: Recuperem fitxer de Couch
-      #res<-downloadNoGEO("C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\downfile.xlsx",'Gene expression_ log2_test.xlsx',3)
-      #Retornem info de visualització: Fitxer format desconegut
-      data.frame('File'=inFile$name,'Content'='Unknown format')
-    }
-  },options = list(
-    scrollX = TRUE
-  ))
+
   
   # ---------------------------------------------------------------------
   # Load NCBI
@@ -463,6 +421,87 @@ shinyServer(function(input, output, session) {
                                  pageLength = 5)
                   , selection = 'none')
   })
+  
+  
+  output$mytabsicofiles = renderUI({
+    
+    aDescripcionsTabs <- array() 
+    aDescripcionsTabs[1] <- 'My Files'
+    aDescripcionsTabs[2] <- 'File Loaded'
+    
+    aAccionsTabs <- array() 
+
+    
+    if (is.null(input$file1)){nTabs = 1}
+    else {nTabs = 2}
+    
+    myTabs = lapply(1:nTabs,
+                    function(i) {
+                      if (i==1){
+                        tabPanel('My Files', id = 'myfiles',
+                                 h5('Files owner'),
+                                 dataTableOutput('filesicoowner'),
+                                 br(),
+                                 h5('Files shared with me'),
+                                 dataTableOutput('filesicoshared')
+                        )         
+                      }
+                      else{
+                        tabPanel('File loaded', id = 'fileloaded',
+                                 dataTableOutput('contents')
+                        )
+                      }
+                    }
+                   )
+    
+    do.call(tabsetPanel, myTabs)
+    
+  })
+  
+  # ---------------------------------------------------------------------  
+  # Load ICO
+  # ---------------------------------------------------------------------  
+  output$contents <- renderDataTable({
+    
+    inFile <- input$file1
+    
+    if (is.null(inFile))
+      return(NULL)
+    
+    #Intentem obrir en Format GEO. Si no ho és mostrem avís abans de continuar
+    esGEO=TRUE
+    res <- tryCatch({
+      objGEO <- getGEO(filename=inFile$datapath)
+    }, error = function(err){
+      message(paste('#Fitxer GEO invalid o format no reconegut: ',err,sep=''))
+      #Compte: Assignació esGEO ha de ser global per tenir scopem fora de la funció
+      esGEO<<-FALSE 
+    })  
+    
+    #Guardem a persistència ICO 
+    if (esGEO==TRUE){
+      #Es fitxer GEO
+      guardaGEO(objGEO,inFile$name,inFile$datapath)
+      #Retornem info de visualitzacio de l'objecte GEO en format dataframe 
+      dfView(objGEO)
+    } else {
+      #Fitxer no GEO. Recopilem informació
+      info <- file.info(inFile$datapath)
+      #Tamany en bytes
+      tamany <- info$size  
+      #Llegim en format raw el fitxer sencer
+      fitxer_raw <- readBin(con=inFile$datapath,"raw",tamany)
+      #Convertim a string de bytes hexadecimal i passem a JSON
+      fitxer_json <- toJSON(raw2hex(fitxer_raw,sep=''))
+      guardaNoGEO(fitxer_json,inFile$name,inFile$datapath,1)
+      #DEBUG: Recuperem fitxer de Couch
+      #res<-downloadNoGEO("C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\downfile.xlsx",'Gene expression_ log2_test.xlsx',3)
+      #Retornem info de visualització: Fitxer format desconegut
+      data.frame('File'=inFile$name,'Content'='Unknown format')
+    }
+  },options = list(
+    scrollX = TRUE
+  ))  
   
   # ---------------------------------------------------------------------
   # Data Catalog NCBI
