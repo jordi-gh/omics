@@ -5,7 +5,9 @@ library(wkb)
 
 source(file.path(gb_Rdir, 'IncCouch.R'))
 
-
+#----------------------------------------------------------
+# Retorna instància singleton de DB Metadata
+#----------------------------------------------------------
 getMetadataDB <- function(){
   #Mantenim una única connexió amb variable global db_meta
   #Si ja la tenim instanciada i vàlida no cal reconnectar
@@ -24,7 +26,9 @@ closeMetaDB <- function(){
   }
 }
 
+#----------------------------------------------------------
 #Guardem objecte GEO a persistència SQLite i Couch 
+#----------------------------------------------------------
 guardaGEO <- function(objecte,filename='',path='',accession=NULL) {
   #Carreguem la db
   db <- getMetadataDB()
@@ -99,8 +103,9 @@ guardaGEO <- function(objecte,filename='',path='',accession=NULL) {
   return(uid)
 }
 
-
+#----------------------------------------------------------
 #Guardem fitxer format lliure ICO a Couch
+#----------------------------------------------------------
 guardaICO <- function(dataJSON,filename='',filenamepath='',userid='') {
   #Carreguem la db
   db <- getMetadataDB()
@@ -112,9 +117,12 @@ guardaICO <- function(dataJSON,filename='',filenamepath='',userid='') {
     return(uid)
   }
   ## Guardar fitxer a taula fitxers ICO
-  uid<-ICOACouch(dataJSON,filename) 
-  sql = 'INSERT INTO icofiles (uid,name,path,filename,loaddate,typefile,userowner) VALUES(:uid,:name,:path,:filename,:loaddate,:typefile,:userowner)'
+  resp<-ICOACouch(dataJSON,filename) 
+  uid<-resp$id
+  lastrev<-resp$rev
+  sql = 'INSERT INTO icofiles (uid,lastrev,name,path,filename,loaddate,typefile,userowner) VALUES(:uid,:lastrev,:name,:path,:filename,:loaddate,:typefile,:userowner)'
   valors<-data.frame(uid=uid,
+                     lastrev=lastrev,
                      name=filename,
                      path=filenamepath,
                      filename=filename,
@@ -126,25 +134,19 @@ guardaICO <- function(dataJSON,filename='',filenamepath='',userid='') {
   return(uid)
 }  
 
+#--------------------------------------------------------------------------------------------
 # Busquem Filename a metadades i si existeix elrecuperem fitxer sencer de Couch
+#--------------------------------------------------------------------------------------------
 recuperaICO <- function(filename,userid){
-  #Carreguem la db
-  db <- getMetadataDB()
-  info<-existeixICO(filename)  
+  #Comprovem si existeix i usuari hi té accés
+  #accessibleICO retorna una llista de 2 elements: 1=True/False, 2=registre metadades/Missatge Error
+  res=accessibleICO(filename,userid)
   # Si no l'hem trobat sortim
-  if (is.null(info)){
-    message(paste('Not found filename: ',filename,sep=''))
-    return(list(FALSE, 'Not found'))
+  if ((res[[1]])==FALSE){
+    message(paste(res[[2]],filename,sep=': '))
+    return(list(FALSE, res[[2]]))
   }
-  #Comprovem si usuari hi té accés
-  bAcces=FALSE
-  #Si és owner, no cal mirar res més
-  if(info$userowner==userid){
-    bAcces=TRUE
-  } else {
-    #TODO: utilitzar funcions d'acces per grups
-    bAcces=TRUE
-  }
+  bAcces = res[[1]]
   if(isTRUE(bAcces)){
     dataJSON <- CouchAICO(info$uid)
     if (dataJSON==FALSE){
@@ -157,14 +159,90 @@ recuperaICO <- function(filename,userid){
   return(list(TRUE, dataJSON))
 }
 
-#Si nom fitxer el tenim a COuch, descarregar i guardar-lo al filepath especificat
+#----------------------------------------------------------------------------------
+#Busquem ICO a metadades i comprovem que existeix i que és accessible per usuari
+#----------------------------------------------------------------------------------
+accessibleICO <- function(nom,userid){
+  #Carreguem la db
+  db <- getMetadataDB()
+  info<-existeixICO(nom)  
+  #Si no existeix registre, hem acabat
+  if (is.null(info)){
+    return(list(FALSE,'File not found'))
+  }
+  #Si és owner, no cal mirar res més
+  if(info$userowner==userid){
+    return(list(TRUE,info))
+  } else {
+    uid=info$uid
+    #Mirem si té accés per grup
+    grups_fitx <- grupsFitxer(uid,db)
+    grups_user <- grupsUsuari(userid,db)
+    #Si els dos conjunts tenen algun grup comú: usuari té accés
+    if(length(intersect(grups_fitx,grups_user))>0){
+      return(list(TRUE,info))
+    } else {
+      return(list(FALSE,'Insufficient permissions'))
+    }
+  }
+  
+}
+
+#--------------------------------------------------------------------------------------------
+#Retorna els grups que tenen accés a un fitxer ICO
+#--------------------------------------------------------------------------------------------
+grupsFitxer <- function(uid,db){
+  if(missing(db)) {
+    #Carreguem la db
+    db <- getMetadataDB()
+  } 
+  
+  sql = paste(paste('SELECT * FROM accessfiles where uidfile=',uid,sep="'"),"'",sep="")
+  message(sql)
+  res = getQuery(db, sql)
+  #Retornem llista de grups que tenen acces
+  if (nrow(res)>0){
+    #TODO: Cal revisar dateaccess, datedenied
+    message()
+    df <- res['idgroup'] 
+    #Convertim a list
+    return(df[,'idgroup'])
+  } else {
+    return(list())
+  }  
+}
+
+#--------------------------------------------------------------------------------------------
+#Retorna els grups als que pertany un usuari
+#--------------------------------------------------------------------------------------------
+grupsUsuari <- function(userid,db){
+  if(missing(db)) {
+    #Carreguem la db
+    db <- getMetadataDB()
+  } 
+  
+  sql = paste0('SELECT * FROM usuari_grup where userid=',userid)
+  res = getQuery(db, sql)
+  #Retornem llista de grups on tenim l'usuari
+  if (nrow(res)>0){
+    df <- res['grupid']
+    #Convertim a list
+    return(df[,'grupid'])
+  } else {
+    return(list())
+  }  
+}
+
+#--------------------------------------------------------------------------------------------
+#Descarregar a disc fitxer ICO (format lliure) guardat a Couch
+#--------------------------------------------------------------------------------------------
 downloadICO <- function(downpath,name,userid){
-  #Retorna una llista de 2 elements: 1=True/False, 2=registre Couch/Missatge Error
+  #recuperaICO retorna una llista de 2 elements: 1=True/False, 2=registre Couch/Missatge Error
   res <- recuperaICO(name,userid)
   if(!is.null(res) && is.list(res)){
     if (isTRUE(res[[1]])){
       fitxer_json <- res[[2]]
-      res_hex <- fromJSON(fitxer_json) ## CASCA AQUI: Error in file(con, "r") : cannot open the connection
+      res_hex <- fromJSON(fitxer_json) 
       res_raw <- wkb::hex2raw(res_hex)
       writeBin(res_raw,downpath)
       message(paste('Downloaded file: ',downpath,sep=''))
@@ -179,7 +257,10 @@ downloadICO <- function(downpath,name,userid){
 }
 
 
-
+#--------------------------------------------------------------------------------------------
+#Retorna el nom GEO d'un objecte GEO.
+#Si l'objecte no té propietat accession (expressionset), utilitzem el filename 
+#--------------------------------------------------------------------------------------------
 nomGEO <- function(objGEO,filename, db){
   if(missing(db)) {
     #Carreguem la db
@@ -212,6 +293,10 @@ nomGEO <- function(objGEO,filename, db){
   return(name)
 }
 
+#--------------------------------------------------------------------------------------------
+#Mirem si tenim descarregat objecte GEO utilitzant metadades. 
+#Si el trobem, retornem uid Couch
+#--------------------------------------------------------------------------------------------
 existeixGEO <- function(objGEO,nom, db){
   if(missing(db)) {
     #Carreguem la db
@@ -242,6 +327,10 @@ existeixGEO <- function(objGEO,nom, db){
   }
 }
 
+#--------------------------------------------------------------------------------------------
+#Mirem si tenim descarregat fitxer ICO utilitzant metadades. 
+#Si el trobem, retornem registre amb tota la info
+#--------------------------------------------------------------------------------------------
 existeixICO <- function(nom, db){
   if(missing(db)) {
     #Carreguem la db
@@ -260,6 +349,10 @@ existeixICO <- function(nom, db){
   }
 }
 
+#--------------------------------------------------------------------------------------------
+#Mirem si tenim GEO descarregat a partir del nom i tipus, mirant metadades
+#Retorna True/False
+#--------------------------------------------------------------------------------------------
 inDataCatalog <- function(nom, type, db){
   if(missing(db)) {
     #Carreguem la db
@@ -443,6 +536,33 @@ getDataHome <- function (db, username){
   aDataHome['icoshare'] <- res$icosharecount
   
   return(aDataHome)
+}
+
+#----------------------------------------------------------
+# Elimina un fitxer ICO de les metadades i el seu document de Couch
+#----------------------------------------------------------
+eliminaICO <- function(nom, userid, db){
+  if(missing(db)) {
+    #Carreguem la db
+    db <- getMetadataDB()
+  } 
+  #Mirem si tenim el fitxer a la BD JSON i si tenim permisos
+  #accessibleICO retorna una llista de 2 elements: 1=True/False, 2=registre metadades/Missatge Error
+  res=accessibleICO(nom,userid)
+  # Si no l'hem trobat sortim
+  if ((res[[1]])==FALSE){
+    error<-paste(res[[2]],nom,sep=': ')
+    message(error)
+    return(list(FALSE, error))
+  }
+  registre <- res[[2]]
+  uid=registre$uid
+  rev=registre$lastrev
+  #Eiminem registre de Couch
+  eliminaCouch(uid,rev)
+  #Eliminem registre de la BD relacional (metadades)
+  sql=paste0(paste0(paste0('DELETE FROM icofiles WHERE name = "'),nom),'"')
+  res = dbSendQuery(db, sql)
 }
 
 sendQuery <- function(db, comanda){
