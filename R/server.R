@@ -370,9 +370,14 @@ shinyServer(function(input, output, session) {
       fitxer_raw <- readBin(con=inFile$datapath,"raw",tamany)
       #Convertim a string de bytes hexadecimal i passem a JSON
       fitxer_json <- toJSON(raw2hex(fitxer_raw,sep=''))
-      guardaNoGEO(fitxer_json,inFile$name,inFile$datapath,1)
+      #debug(guardaICO)
+      #TODO: passar usuari actiu, ara 3 a pinyó
+      guardaICO(fitxer_json,inFile$name,inFile$datapath,3)
       #DEBUG: Recuperem fitxer de Couch
       #res<-downloadNoGEO("C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\downfile.xlsx",'Gene expression_ log2_test.xlsx',3)
+      #DEBUG: Prova Eliminem fitxer de couch
+      #debug(eliminaCouch)
+      #res<-eliminaICO('08.swf',3,db)
       #Retornem info de visualització: Fitxer format desconegut
       data.frame('File'=inFile$name,'Content'='Unknown format')
     }
