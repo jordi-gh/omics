@@ -146,7 +146,12 @@ shinyServer(function(input, output, session) {
                      tabPanel("NCBI data", id = "ncbidata",
                               sidebarLayout(
                                 sidebarPanel(
-                                  textInput("searchexperiment", label = h3("Search GPL"), value = "Enter text..."),
+                                  h3("Search NCBI file"),
+                                  radioButtons('typefilencbi', 'Select type file', choices = c('gpl','gsm','gse','gds')),
+                                  textInput("searchexperiment", label = h5("File:"), value = "Enter text..."),
+                                  actionButton("submitfilencbi", "Search file"),
+                                  br(),
+                                  br(),
                                   # select dataset
                                   uiOutput("choose_dataset"),
                                   # select sample
@@ -154,9 +159,13 @@ shinyServer(function(input, output, session) {
                                 ),
                                 
                                 mainPanel(
-                                  textOutput("salidaprueba"),
+                                  uiOutput("metadataplatformtitle"),
                                   dataTableOutput("metadataplatform"),
+                                  br(),
+                                  uiOutput("metadataserietitle"),
                                   dataTableOutput("metadataserie"),
+                                  br(),
+                                  uiOutput("metadatasampletitle"),
                                   dataTableOutput("metadatasample")
                                 )
                               )
@@ -460,6 +469,10 @@ shinyServer(function(input, output, session) {
   # ---------------------------------------------------------------------
   # Select inicial de DataSets
   output$choose_dataset <- renderUI({
+    submitDataSetFilencbi() #Esperamos al submit
+  })
+  
+  submitDataSetFilencbi <- eventReactive(input$submitfilencbi,{
     
     if (is.null(input$searchexperiment) || input$searchexperiment == "Enter text..."){
       selectizeInput("dataset", "GSE", c('Select DataSet Serie',""))
@@ -467,24 +480,32 @@ shinyServer(function(input, output, session) {
     else{
       if(!file.exists(gb_geoSQLFile)) { getSQLiteFile() }
       con <- dbConnect(SQLite(),gb_geoSQLFile)
-      sql <- paste("SELECT DISTINCT gse.gse",
-                   " FROM",
-                   " gsm JOIN gse_gsm ON gsm.gsm=gse_gsm.gsm",
-                   " JOIN gse ON gse_gsm.gse=gse.gse",
-                   " JOIN gse_gpl ON gse_gpl.gse=gse.gse",
-                   " JOIN gpl ON gse_gpl.gpl=gpl.gpl",
-                   " WHERE",
-                   " gpl.gpl LIKE '%",input$searchexperiment,"%'", sep="")
-      rs <- dbGetQuery(con,sql)
-      data_sets <- as.matrix(rs)
-      dbDisconnect(con)
-      selectizeInput("dataset", "GSE", c('Select DataSet Serie',as.list(data_sets)),options = list(maxOptions = 10))
+      if(input$typefilencbi == 'gpl'){
+        sql <- paste("SELECT DISTINCT gse.gse",
+                     " FROM",
+                     " gsm JOIN gse_gsm ON gsm.gsm=gse_gsm.gsm",
+                     " JOIN gse ON gse_gsm.gse=gse.gse",
+                     " JOIN gse_gpl ON gse_gpl.gse=gse.gse",
+                     " JOIN gpl ON gse_gpl.gpl=gpl.gpl",
+                     " WHERE",
+                     " gpl.gpl LIKE '%",input$searchexperiment,"%'", sep="")
+        rs <- dbGetQuery(con,sql)
+        data_sets <- as.matrix(rs)
+        dbDisconnect(con)
+        selectizeInput("dataset", "GSE", c('Select DataSet Serie',as.list(data_sets)),options = list(maxOptions = 10))
+      }else{
+        selectizeInput("dataset", "GSE", c('Select DataSet Serie',""))
+      }
     }
     
   })
   
   # Select inicial de Sample (una vez seleccionado DataSets)
   output$choose_sample <- renderUI({
+    submitSampleFilencbi() #Esperamos al submit
+  })
+  
+  submitSampleFilencbi <- eventReactive(input$dataset,{
     
     if (is.null(input$dataset) || input$dataset == "Select DataSet Serie"){
       selectInput("sample", "GSM", c('Select DataSet Sample',""))
@@ -504,31 +525,101 @@ shinyServer(function(input, output, session) {
     
   })
   
-  output$salidaprueba <- renderText({
+  output$metadataplatformtitle <- renderUI({
+    submitDataSetFilencbiTitle() #Esperamos al submit
+  })
+  
+  submitDataSetFilencbiTitle <- eventReactive(input$submitfilencbi,{
     
-    paste("selected: ",input$searchexperiment," - ",input$dataset," - ",input$sample)
+    if (is.null(input$searchexperiment) || input$searchexperiment == "Enter text..."){
+      return()
+    }else {
+      return(h4(input$searchexperiment))
+    }
+    
+  })
+  
+  output$metadataserietitle <- renderUI({
+    
+    if (is.null(input$dataset) || input$dataset == "Select DataSet Serie"){
+      return()
+    }else {
+      return(h4(input$dataset))
+    }
+    
+  })
+  
+  output$metadatasampletitle <- renderUI({
+    
+    if (is.null(input$sample) || input$sample == "Select DataSet Sample"){
+      return()
+    }else {
+      return(h4(input$sample))
+    }
     
   })
   
   output$metadataplatform <- renderDataTable({
+    submitDataSetFilencbiTable() #Esperamos al submit
+  })
+  
+  submitDataSetFilencbiTable <- eventReactive(input$submitfilencbi,{
     if (is.null(input$searchexperiment) || input$searchexperiment == "Enter text..."){
       return()
     }
-    con <- dbConnect(SQLite(),gb_geoSQLFile)
-    sql <- paste("SELECT *",
-                 " FROM gpl",
-                 " WHERE gpl.gpl = '",input$searchexperiment,"'", sep="")
-    dataNCBI <- dbGetQuery(con,sql)
+    if(input$typefilencbi == 'gpl'){
+      con <- dbConnect(SQLite(),gb_geoSQLFile)
+      sql <- paste("SELECT *",
+                   " FROM gpl",
+                   " WHERE gpl.gpl = '",input$searchexperiment,"'", sep="")
+      dataNCBI <- dbGetQuery(con,sql)
+      
+      if(nrow(dataNCBI) > 0){
+        db <- getMetadataDB()
+        incatalegICO <- inDataCatalog(dataNCBI$gpl, 'GPL', db)
+        if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
+        else incatalegICOtext <- 'No'
     
-    db <- getMetadataDB()
-    incatalegICO <- inDataCatalog(dataNCBI$gpl, 'GPL', db)
-    if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
-    else incatalegICOtext <- 'No'
-
-    dataNCBI["Already upload to ICOcloud?"] <- incatalegICOtext #Add column
-    dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
-    names(dataNCBI) <- (paste(input$searchexperiment," metadata")) #Column title
-    return(dataNCBI)
+        dataNCBI["Already upload to ICOcloud?"] <- incatalegICOtext #Add column
+        dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
+        names(dataNCBI) <- (paste(input$searchexperiment," metadata")) #Column title
+        return(dataNCBI)
+      }
+    }else if(input$typefilencbi == 'gse'){
+      con <- dbConnect(SQLite(),gb_geoSQLFile)
+      sql <- paste("SELECT *",
+                   " FROM gse",
+                   " WHERE gse.gse = '",input$searchexperiment,"'", sep="")
+      dataNCBI <- dbGetQuery(con,sql)
+      
+      if(nrow(dataNCBI) > 0){
+        db <- getMetadataDB()
+        incatalegICO <- inDataCatalog(dataNCBI$gse, 'GSE', db)
+        if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
+        else incatalegICOtext <- 'No'
+        
+        dataNCBI["Already upload to ICOcloud?"] <- incatalegICOtext #Add column
+        dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
+        names(dataNCBI) <- (paste(input$dataset," metadata")) #Column title
+        return(dataNCBI)
+      }
+    }else if(input$typefilencbi == 'gsm'){
+      con <- dbConnect(SQLite(),gb_geoSQLFile)
+      sql <- paste("SELECT *",
+                   " FROM gsm",
+                   " WHERE gsm.gsm = '",input$searchexperiment,"'", sep="")
+      dataNCBI <- dbGetQuery(con,sql)
+      
+      db <- getMetadataDB()
+      incatalegICO <- inDataCatalog(dataNCBI$gsm, 'GSM', db)
+      if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
+      else incatalegICOtext <- 'No'
+      
+      dataNCBI["Already upload to ICOcloud?"] <- incatalegICOtext #Add column
+      dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
+      names(dataNCBI) <- (paste(input$sample," metadata")) #Column title
+      return(dataNCBI)
+    }
   })
   
   output$metadataserie <- renderDataTable({
