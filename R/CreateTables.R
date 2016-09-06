@@ -57,7 +57,7 @@ dbSendQuery(conn = db,
 dbSendQuery(conn = db,
             "CREATE TABLE usuari_grup
             (userid INT,
-            grupid TEXT,
+            grupid INT,
             CONSTRAINT usergrup_unique UNIQUE (userid,grupid)
             )
             ")
@@ -87,6 +87,7 @@ dbSendQuery(conn = db,
 dbSendQuery(conn = db,
             "CREATE TABLE icofiles
             (uid TEXT PRIMARY KEY,
+             lastrev TEXT,
              name TEXT,
              path TEXT,
              filename TEXT,
