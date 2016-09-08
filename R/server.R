@@ -328,9 +328,11 @@ shinyServer(function(input, output, session) {
   # --------------------------------------------------------------------- 
   output$choose_gse <- renderUI({
     
-    sql="select filename, uid from gse"
-    res = dbGetQuery(db, sql)
-    
+    # Se seleccionan todos los ficheros gse de NCBI y los de ICO de tipo gse pero que el 
+    # grupo de trabajo del usuario tenga permisos sobre ellos y que hayan sido compartidos con el grupo
+    # de este usuario
+    res <- myGSEfiles(db, USERPROFILE$Profile$username)
+
     if (nrow(res)>0){
       selectizeInput("gseplot", "Select GSE", choices = split(res$uid,res$filename)) 
     } else {

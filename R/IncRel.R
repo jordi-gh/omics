@@ -539,6 +539,48 @@ getDataHome <- function (db, username){
 }
 
 #----------------------------------------------------------
+# Retorna todos los ficheros gse a los que tiene el acceso 
+# el usuario (tanto ficheros gse NCBI como ICO tipo gse como
+# ICO tipo gse compartidos con el grupo del usuario)
+#----------------------------------------------------------
+myGSEfiles <- function (db, username){
+  
+  if(missing(db)) {
+    #Carreguem la db
+    db <- getMetadataDB()
+  }
+  
+  sqlncbi="select filename, uid from gse"
+  
+  sqlmy=paste0("select filename, uid
+                from icofiles
+                where userowner in (
+                  select userid 
+                  from usuari_grup 
+                  where grupid in ( select distinct ug.grupid 
+                                    from 	usuari_grup ug, usuaris u 
+                                    where ug.userid = u.id and u.username = '",username,"')
+                )
+               and typefile='gse'")
+ 
+  sqlshare=paste0("select filename, uid
+                   from icofiles
+                   where uid in ( select uidfile as icosharecount 
+                                  from accessfiles 
+                                  where idgroup in (select distinct ug.grupid 
+                                                    from usuari_grup ug, usuaris u 
+                                                    where ug.userid = u.id and u.username = '",username,"'))
+                  and typefile='gse'")
+  
+  
+  sql = paste0(sqlncbi ," UNION ", sqlmy ," UNION ", sqlshare)
+  res = dbGetQuery(db, sql)
+
+  return(res)
+   
+}
+
+#----------------------------------------------------------
 # Elimina un fitxer ICO de les metadades i el seu document de Couch
 #----------------------------------------------------------
 eliminaICO <- function(nom, userid, db){
