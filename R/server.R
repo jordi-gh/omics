@@ -208,7 +208,8 @@ shinyServer(function(input, output, session) {
                      tabPanel("Hierarchical Clustering", id = "heatmapgse",
                               sidebarLayout(
                                 sidebarPanel(
-                                  selectizeInput("gseplot", "GSE", c('Select GSE','GSE976')),
+                                  uiOutput("choose_gse"),
+                                  #selectizeInput("gseplot", "GSE", c('Select GSE','GSE976')),
                                   downloadButton('downloadheatmap', 'Download Plot')
                                 ),
                                 mainPanel(
@@ -325,8 +326,25 @@ shinyServer(function(input, output, session) {
   # ---------------------------------------------------------------------  
   # Analisis1: Hierarchical Clustering Heatmap GSE
   # --------------------------------------------------------------------- 
+  output$choose_gse <- renderUI({
+    
+    sql="select filename, uid from gse"
+    res = dbGetQuery(db, sql)
+    
+    if (nrow(res)>0){
+      selectizeInput("gseplot", "Select GSE", choices = split(res$uid,res$filename)) 
+    } else {
+      selectizeInput("gseplot", "Select GSE", c('No GSE Data',""))
+    }
+    
+  })
+  
   plotInputHeatmap <- function(){
-        if (input$gseplot!="Select GSE" && input$gseplot!=""){
+        if (input$gseplot!="Select GSE" && input$gseplot!="" && input$gseplot!="No GSE Data"){
+          
+          #@TODO en input$gseplot esta el uid del fichero que está en COUCH para RECUPERAR
+          #@ EJEMPLO GSE976
+          
           destdir = file.path(gb_Rdir, 'BD')
           gse = getGEO(input$gseplot, destdir = destdir)[[1]]
           sdN = 3
