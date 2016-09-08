@@ -539,18 +539,18 @@ getDataHome <- function (db, username){
 }
 
 #----------------------------------------------------------
-# Retorna todos los ficheros gse a los que tiene el acceso 
-# el usuario (tanto ficheros gse NCBI como ICO tipo gse como
-# ICO tipo gse compartidos con el grupo del usuario)
+# Retorna todos los ficheros de tipo typefile a los que tiene el acceso 
+# el usuario (tanto ficheros typefile NCBI como ICO tipo typefile como
+# ICO tipo typefile compartidos con el grupo del usuario)
 #----------------------------------------------------------
-myGSEfiles <- function (db, username){
+myXfiles <- function (db, username,typefile){
   
   if(missing(db)) {
     #Carreguem la db
     db <- getMetadataDB()
   }
   
-  sqlncbi="select filename, uid from gse"
+  sqlncbi=paste0("select filename, uid from ", typefile)
   
   sqlmy=paste0("select filename, uid
                 from icofiles
@@ -561,7 +561,7 @@ myGSEfiles <- function (db, username){
                                     from 	usuari_grup ug, usuaris u 
                                     where ug.userid = u.id and u.username = '",username,"')
                 )
-               and typefile='gse'")
+               and typefile='",typefile,"'")
  
   sqlshare=paste0("select filename, uid
                    from icofiles
@@ -570,7 +570,7 @@ myGSEfiles <- function (db, username){
                                   where idgroup in (select distinct ug.grupid 
                                                     from usuari_grup ug, usuaris u 
                                                     where ug.userid = u.id and u.username = '",username,"'))
-                  and typefile='gse'")
+                  and typefile='",typefile,"'")
   
   
   sql = paste0(sqlncbi ," UNION ", sqlmy ," UNION ", sqlshare)
