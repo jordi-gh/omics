@@ -127,7 +127,7 @@ shinyServer(function(input, output, session) {
                               sidebarLayout(
                                 sidebarPanel(
                                   h3('New ICO file'),br(),
-                                  radioButtons('typefileico', 'Select type file', choices = c('gpl','gsm','gse','gds')),
+                                  radioButtons('typefileico', 'Select type file', choices = c('none','gpl','gsm','gse','gds')),
                                   fileInput('file1', h4('Choose file to upload'))
                                 ),
                                 
