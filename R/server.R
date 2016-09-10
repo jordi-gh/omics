@@ -161,14 +161,7 @@ shinyServer(function(input, output, session) {
                                 ),
                                 
                                 mainPanel(
-                                  uiOutput("metadataplatformtitle"),
-                                  dataTableOutput("metadataplatform"),
-                                  br(),
-                                  uiOutput("metadataserietitle"),
-                                  dataTableOutput("metadataserie"),
-                                  br(),
-                                  uiOutput("metadatasampletitle"),
-                                  dataTableOutput("metadatasample")
+                                  uiOutput('mytabsncbifiles')
                                 )
                               )
                      )
@@ -531,6 +524,44 @@ shinyServer(function(input, output, session) {
   # ---------------------------------------------------------------------
   # Data Catalog NCBI
   # ---------------------------------------------------------------------
+  output$mytabsncbifiles = renderUI({
+    aDescripcionsTabs <- array() 
+    aDescripcionsTabs[1] <- 'GPL'
+    aDescripcionsTabs[2] <- 'GSE'
+    aDescripcionsTabs[3] <- 'GSM'
+    
+    aAccionsTabs <- array() 
+    
+    if (is.null(input$dataset) || input$dataset == "Select DataSet Serie") {nTabs = 1}
+    else if (is.null(input$sample) || input$sample == "Select DataSet Sample") {nTabs = 2}
+    else {nTabs = 3}
+    
+    myTabs = lapply(1:nTabs,
+                    function(i) {
+                      if (i==1){
+                        tabPanel(input$searchexperiment, id = 'gpltab',
+                                 uiOutput("metadataplatformtitle"),
+                                 dataTableOutput("metadataplatform")
+                        )         
+                      }
+                      else if (i==2){
+                        tabPanel(input$dataset, id = 'gsetab',
+                                 uiOutput("metadataserietitle"),
+                                 dataTableOutput("metadataserie")
+                        )
+                      }
+                      else {
+                        tabPanel(input$sample, id = 'gsmtab',
+                                 uiOutput("metadatasampletitle"),
+                                 dataTableOutput("metadatasample")
+                        )
+                      }
+                    }
+    )
+    
+    do.call(tabsetPanel, myTabs)
+  })
+  
   # Select inicial de DataSets
   output$choose_dataset <- renderUI({
     submitDataSetFilencbi() #Esperamos al submit
