@@ -34,12 +34,12 @@ GeoACouch <- function(objGEO,nom) {
     #Preparem registre per inserir a BD
     newreg<-toJSON(list(nom=nom,metadades=metadades,taula=taula))
   }
-  getURL(paste("http://localhost:5984/geodb/",uid,sep=""),
+  response<-fromJSON(getURL(paste("http://localhost:5984/geodb/",uid,sep=""),
          customrequest="PUT",
          httpheader=c('Content-Type'='application/json'),
-         postfields=newreg)
-  #Retornem uid per guardar-lo a model relacional
-  return (uid)
+         postfields=newreg))
+  #Retornem dades registre guardar-les a model relacional
+  return (response)
 }
 
 
