@@ -152,6 +152,7 @@ shinyServer(function(input, output, session) {
                                   radioButtons('typefilencbi', 'Select type file', choices = c('gpl','gsm','gse','gds')),
                                   textInput("searchexperiment", label = h5("File:"), value = "Enter text..."),
                                   actionButton("submitfilencbi", "Search file"),
+                                 # actionButton("ncbitoicocloud", "Upload to ICO Cloud"),
                                   br(),
                                   br(),
                                   # select dataset
@@ -375,7 +376,7 @@ shinyServer(function(input, output, session) {
   ))
   
   submitExperiment <- eventReactive(input$submitexperiment,{ 
-    
+    message('DBG: submitExperiment')
     if (input$experimentupload!="Enter text..." && input$experimentupload!=""){
       destdir = file.path(gb_Rdir, 'BD')
       
@@ -424,6 +425,7 @@ shinyServer(function(input, output, session) {
   
   
   output$mytabsicofiles = renderUI({
+    message('DBG: mytabsicofiles')
     
     aDescripcionsTabs <- array() 
     aDescripcionsTabs[1] <- 'My Files'
@@ -431,10 +433,24 @@ shinyServer(function(input, output, session) {
     
     aAccionsTabs <- array() 
 
+    inFile <- input$file1
     
-    if (is.null(input$file1)){nTabs = 1}
-    else {nTabs = 2}
+    if (is.null(inFile)){nTabs = 1}
+    else {
+      nTabs = 2
+      ###########REVISAR SI ESTO VA AQUI O NO, NO LO TENGO CLARO (Towers)
+      #guardaICO guarda a persistència relacional i NOSQL el fitxer
+      #Encara que sigui un fitxer compatible GEO, es guardarà com a fitxer ICO (icofiles)
+      #Retorna una llista de tres elements:  1) T/F, 2) uid de Couch 3) la vista en format dataframe
+      #message(paste0('usuari: ',USERPROFILE$Profile$id))
+      #res <- guardaICO(inFile,USERPROFILE$Profile$id)
+      #if(!is.null(res) && is.list(res)){
+      #retornem dataframe de visualització
+      #res[[3]]
+      #}  
+    }
     
+
     myTabs = lapply(1:nTabs,
                     function(i) {
                       if (i==1){
@@ -462,48 +478,29 @@ shinyServer(function(input, output, session) {
   # Load ICO
   # ---------------------------------------------------------------------  
   output$contents <- renderDataTable({
-    
+
     inFile <- input$file1
     
     if (is.null(inFile))
       return(NULL)
     
-    #Intentem obrir en Format GEO. Si no ho és mostrem avís abans de continuar
-    esGEO=TRUE
-    res <- tryCatch({
-      objGEO <- getGEO(filename=inFile$datapath)
-    }, error = function(err){
-      message(paste('#Fitxer GEO invalid o format no reconegut: ',err,sep=''))
-      #Compte: Assignació esGEO ha de ser global per tenir scopem fora de la funció
-      esGEO<<-FALSE 
-    })  
+    #guardaICO guarda a persistència relacional i NOSQL el fitxer
+    #Encara que sigui un fitxer compatible GEO, es guardarà com a fitxer ICO (icofiles)
+    #Retorna una llista de tres elements:  1) T/F, 2) uid de Couch 3) la vista en format dataframe
+    message(paste0('usuari_old: ',USERPROFILE$Profile$id))
+    res <- guardaICO(inFile,USERPROFILE$Profile$id)
+    if(!is.null(res) && is.list(res)){
+      #retornem dataframe de visualització
+      res[[3]]
+    }  
     
-    #Guardem a persistència ICO 
-    if (esGEO==TRUE){
-      #Es fitxer GEO
-      guardaGEO(objGEO,inFile$name,inFile$datapath)
-      #Retornem info de visualitzacio de l'objecte GEO en format dataframe 
-      dfView(objGEO)
-    } else {
-      #Fitxer no GEO. Recopilem informació
-      info <- file.info(inFile$datapath)
-      #Tamany en bytes
-      tamany <- info$size  
-      #Llegim en format raw el fitxer sencer
-      fitxer_raw <- readBin(con=inFile$datapath,"raw",tamany)
-      #Convertim a string de bytes hexadecimal i passem a JSON
-      fitxer_json <- toJSON(raw2hex(fitxer_raw,sep=''))
-      #debug(guardaICO)
-      #TODO: passar usuari actiu, ara 3 a pinyó
-      guardaICO(fitxer_json,inFile$name,inFile$datapath,3)
-      #DEBUG: Recuperem fitxer de Couch
-      #res<-downloadNoGEO("C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\downfile.xlsx",'Gene expression_ log2_test.xlsx',3)
-      #DEBUG: Prova Eliminem fitxer de couch
-      #debug(eliminaCouch)
-      res<-eliminaICO('13.swf',3,db)
-      #Retornem info de visualització: Fitxer format desconegut
-      data.frame('File'=inFile$name,'Content'='Unknown format')
-    }
+    #DEBUG: Recuperem fitxer de Couch
+    #res<-downloadNoGEO("C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\downfile.xlsx",'Gene expression_ log2_test.xlsx',3)
+    #DEBUG: Prova Eliminem fitxer de couch
+    #debug(eliminaCouch)
+    #res<-eliminaICO('13.swf',3,db)
+    #res<-eliminaGEO('13.swf',3,db)
+    
   },options = list(
     scrollX = TRUE
   ))  
@@ -612,6 +609,7 @@ shinyServer(function(input, output, session) {
       return()
     }
     if(input$typefilencbi == 'gpl'){
+      message('DBG:submitDataSetFilencbiTable GPL')
       con <- dbConnect(SQLite(),gb_geoSQLFile)
       sql <- paste("SELECT *",
                    " FROM gpl",
@@ -624,7 +622,7 @@ shinyServer(function(input, output, session) {
         if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
         else incatalegICOtext <- 'No'
     
-        dataNCBI["Already upload to ICOcloud?"] <- incatalegICOtext #Add column
+        dataNCBI["In ICO cloud?"] <- incatalegICOtext #Add column
         dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
         names(dataNCBI) <- (paste(input$searchexperiment," metadata")) #Column title
         return(dataNCBI)
@@ -642,7 +640,7 @@ shinyServer(function(input, output, session) {
         if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
         else incatalegICOtext <- 'No'
         
-        dataNCBI["Already upload to ICOcloud?"] <- incatalegICOtext #Add column
+        dataNCBI["In ICO cloud?"] <- incatalegICOtext #Add column
         dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
         names(dataNCBI) <- (paste(input$dataset," metadata")) #Column title
         return(dataNCBI)
@@ -659,7 +657,7 @@ shinyServer(function(input, output, session) {
       if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
       else incatalegICOtext <- 'No'
       
-      dataNCBI["Already upload to ICOcloud?"] <- incatalegICOtext #Add column
+      dataNCBI["In ICO cloud?"] <- incatalegICOtext #Add column
       dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
       names(dataNCBI) <- (paste(input$sample," metadata")) #Column title
       return(dataNCBI)
@@ -681,7 +679,7 @@ shinyServer(function(input, output, session) {
     if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
     else incatalegICOtext <- 'No'
     
-    dataNCBI["Already upload to ICOcloud?"] <- incatalegICOtext #Add column
+    dataNCBI["In ICO cloud?"] <- incatalegICOtext #Add column
     dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
     names(dataNCBI) <- (paste(input$dataset," metadata")) #Column title
     return(dataNCBI)
@@ -702,7 +700,7 @@ shinyServer(function(input, output, session) {
     if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
     else incatalegICOtext <- 'No'
     
-    dataNCBI["Already upload to ICOcloud?"] <- incatalegICOtext #Add column
+    dataNCBI["In ICO cloud?"] <- incatalegICOtext #Add column
     dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
     names(dataNCBI) <- (paste(input$sample," metadata")) #Column title
     return(dataNCBI)
