@@ -381,7 +381,7 @@ shinyServer(function(input, output, session) {
   # ---------------------------------------------------------------------
   # Load NCBI
   # ---------------------------------------------------------------------
-  output$experiment <- renderDataTable({ 
+  output$experimenttable <- renderDataTable({ 
     submitExperiment() #Esperamos al submit
   },options = list(
     scrollX = TRUE
@@ -389,15 +389,61 @@ shinyServer(function(input, output, session) {
   
   submitExperiment <- eventReactive(input$submitexperiment,{ 
     
-    if (input$experimentupload!="Enter text..." && input$experimentupload!=""){
+    if (input$searchexperiment!="Enter text..." && input$searchexperiment!=""){
       destdir = file.path(gb_Rdir, 'BD')
       
-      ExperimentNCBI <- getGEO(input$experimentupload, destdir = destdir)
+      ExperimentNCBI <- getGEO(input$searchexperiment, destdir = destdir)
       
       #Guardem a persistència ICO
       #Compte: Enviem un 'named param' a la funció
       #http://blog.moertel.com/posts/2006-01-20-wondrous-oddities-rs-function-call-semantics.html
-      guardaGEO(ExperimentNCBI,accession=input$experimentupload)
+      guardaGEO(ExperimentNCBI,accession=input$searchexperiment)
+      # Retorna dataframe de visualització segons tipus d'objecte GEO
+      dfView(ExperimentNCBI)
+    }
+    
+  })
+  
+  output$experimenttableserie <- renderDataTable({ 
+    submitExperimentSerie() #Esperamos al submit
+  },options = list(
+    scrollX = TRUE
+  ))
+  
+  submitExperimentSerie <- eventReactive(input$submitexperimentdataset,{ 
+    
+    if (!is.null(input$dataset) || input$dataset != "Select DataSet Serie"){
+      destdir = file.path(gb_Rdir, 'BD')
+      
+      ExperimentNCBI <- getGEO(input$dataset, destdir = destdir)
+      
+      #Guardem a persistència ICO
+      #Compte: Enviem un 'named param' a la funció
+      #http://blog.moertel.com/posts/2006-01-20-wondrous-oddities-rs-function-call-semantics.html
+      guardaGEO(ExperimentNCBI,accession=input$dataset)
+      # Retorna dataframe de visualització segons tipus d'objecte GEO
+      dfView(ExperimentNCBI)
+    }
+    
+  })
+  
+  output$experimenttablesample <- renderDataTable({ 
+    submitExperimentSample() #Esperamos al submit
+  },options = list(
+    scrollX = TRUE
+  ))
+  
+  submitExperimentSample <- eventReactive(input$submitexperimentsample,{ 
+    
+    if (!is.null(input$sample) || input$sample != "Select DataSet Sample"){
+      destdir = file.path(gb_Rdir, 'BD')
+      
+      ExperimentNCBI <- getGEO(input$sample, destdir = destdir)
+      
+      #Guardem a persistència ICO
+      #Compte: Enviem un 'named param' a la funció
+      #http://blog.moertel.com/posts/2006-01-20-wondrous-oddities-rs-function-call-semantics.html
+      guardaGEO(ExperimentNCBI,accession=input$sample)
       # Retorna dataframe de visualització segons tipus d'objecte GEO
       dfView(ExperimentNCBI)
     }
@@ -541,19 +587,25 @@ shinyServer(function(input, output, session) {
                       if (i==1){
                         tabPanel(input$searchexperiment, id = 'gpltab',
                                  uiOutput("metadataplatformtitle"),
-                                 dataTableOutput("metadataplatform")
+                                 br(),
+                                 dataTableOutput("metadataplatform"),
+                                 dataTableOutput("experimenttable")
                         )         
                       }
                       else if (i==2){
                         tabPanel(input$dataset, id = 'gsetab',
                                  uiOutput("metadataserietitle"),
-                                 dataTableOutput("metadataserie")
+                                 br(),
+                                 dataTableOutput("metadataserie"),
+                                 dataTableOutput("experimenttableserie")
                         )
                       }
                       else {
                         tabPanel(input$sample, id = 'gsmtab',
                                  uiOutput("metadatasampletitle"),
-                                 dataTableOutput("metadatasample")
+                                 br(),
+                                 dataTableOutput("metadatasample"),
+                                 dataTableOutput("experimenttablesample")
                         )
                       }
                     }
@@ -633,11 +685,11 @@ shinyServer(function(input, output, session) {
       incatalegICO <- inDataCatalog(input$searchexperiment, toupper(input$typefilencbi), db)
       if (incatalegICO == TRUE) {
         incatalegICOtext <- 'already upload to ICOcloud'
-        return(h4(input$searchexperiment," ",incatalegICOtext,style = "color: green;"))
+        return(HTML(paste(h4(input$searchexperiment," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperiment", "Download experiment"))))
       }
       else {
         incatalegICOtext <- 'not upload to ICOcloud'
-        return(h4(input$searchexperiment," ",incatalegICOtext,style = "color: red;"))
+        return(HTML(paste(h4(input$searchexperiment," ",incatalegICOtext,style = "color: red;"),actionButton("submitexperiment", "Download experiment"))))
       }
     }
     
@@ -652,11 +704,11 @@ shinyServer(function(input, output, session) {
       incatalegICO <- inDataCatalog(input$dataset, 'GSE', db)
       if (incatalegICO == TRUE) {
         incatalegICOtext <- 'already upload to ICOcloud'
-        return(h4(input$dataset," ",incatalegICOtext,style = "color: green;"))
+        return(HTML(paste(h4(input$dataset," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperimentdataset", "Download experiment"))))
       }
       else {
         incatalegICOtext <- 'not upload to ICOcloud'
-        return(h4(input$dataset," ",incatalegICOtext,style = "color: red;"))
+        return(HTML(paste(h4(input$dataset," ",incatalegICOtext,style = "color: red;"),actionButton("submitexperimentdataset", "Download experiment"))))
       }
     }
     
@@ -671,11 +723,11 @@ shinyServer(function(input, output, session) {
       incatalegICO <- inDataCatalog(input$sample, 'GSM', db)
       if (incatalegICO == TRUE) {
         incatalegICOtext <- 'already upload to ICOcloud'
-        return(h4(input$sample," ",incatalegICOtext,style = "color: green;"))
+        return(HTML(paste(h4(input$sample," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperimentsample", "Download experiment"))))
       }
       else {
         incatalegICOtext <- 'not upload to ICOcloud'
-        return(h4(input$sample," ",incatalegICOtext,style = "color: red;"))
+        return(HTML(paste(h4(input$sample," ",incatalegICOtext,style = "color: red;"),actionButton("submitexperimentsample", "Download experiment"))))
       }
     }
     
