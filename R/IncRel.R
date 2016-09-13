@@ -46,16 +46,21 @@ guardaGEO <- function(objecte,filename='',path='',accession=NULL) {
   } else {
     name = accession
   }  
-  uid<-existeixGEO(objGEO,name,db)  
+  reg<-existeixGEO(objGEO,name,db)  
+  uid<-reg$uid
   # Si l'hem trobat no cal afegir-lo
   if (!is.null(uid)){
     return(uid)
   }
   ## Carregar objecte i segons classe posem info general del fitxer a taula del model relacional que correspongui
   if (toupper(class(objGEO))=='GSM'){
-     uid<-GeoACouch(objGEO,name) 
-     sql = 'INSERT INTO gsm (uid,name,down,path,filename,downdate) VALUES(:uid,:name,:down,:path,:filename,:downdate)'
+     resp<-GeoACouch(objGEO,name) 
+     uid<-resp$id
+     lastrev<-resp$rev
+     
+     sql = 'INSERT INTO gsm (uid,lastrev,name,down,path,filename,downdate) VALUES(:uid,:lastrev,:name,:down,:path,:filename,:downdate)'
      valors<-data.frame(uid=uid,
+                        lastrev=lastrev,
                         name=name,
                         down=1,
                         path=path,
@@ -65,9 +70,12 @@ guardaGEO <- function(objecte,filename='',path='',accession=NULL) {
      dbSendPreparedQuery(db, sql, bind.data = valors)
   }
   if ((toupper(class(objGEO))=='GSE') || (toupper(class(objGEO))=='EXPRESSIONSET')){
-    uid<-GeoACouch(objGEO,name)
-    sql = 'INSERT INTO gse (uid,name,down,path,filename,downdate) VALUES(:uid,:name,:down,:path,:filename,:downdate)'
+    resp<-GeoACouch(objGEO,name) 
+    uid<-resp$id
+    lastrev<-resp$rev
+    sql = 'INSERT INTO gse (uid,lastrev,name,down,path,filename,downdate) VALUES(:uid,:lastrev,:name,:down,:path,:filename,:downdate)'
     valors<-data.frame(uid=uid,
+                       lastrev=lastrev,
                        name=name,
                        down=1,
                        path=path,
@@ -77,49 +85,87 @@ guardaGEO <- function(objecte,filename='',path='',accession=NULL) {
     dbSendPreparedQuery(db, sql, bind.data = valors)
   }
   if (toupper(class(objGEO))=='GPL'){
-    uid<-GeoACouch(objGEO,name) 
-    sql = 'INSERT INTO gpl (uid,name,down,path,filename,downdate) VALUES(:uid,:name,:down,:path,:filename,:downdate)'
+    resp<-GeoACouch(objGEO,name) 
+    uid<-resp$id
+    lastrev<-resp$rev
+    sql = 'INSERT INTO gpl (uid,lastrev,name,down,path,filename,downdate) VALUES(:uid,:lastrev,:name,:down,:path,:filename,:downdate)'
     valors<-data.frame(uid=uid,
+                       lastrev=lastrev,
                        name=name,
                        down=1,
                        path=path,
                        filename=filename,
                        downdate=format(Sys.time(),format='%Y/%m/%d %H:%M:%S')
-                       )
+    )
     dbSendPreparedQuery(db, sql, bind.data = valors)
   }    
   if (toupper(class(objGEO))=='GDS'){
-    uid<-GeoACouch(objGEO,name)
-    sql = 'INSERT INTO gds (uid,name,down,path,filename,downdate) VALUES(:uid,:name,:down,:path,:filename,:downdate)'
+    resp<-GeoACouch(objGEO,name) 
+    uid<-resp$id
+    lastrev<-resp$rev
+    sql = 'INSERT INTO gds (uid,lastrev,name,down,path,filename,downdate) VALUES(:uid,:lastrev,:name,:down,:path,:filename,:downdate)'
     valors<-data.frame(uid=uid,
+                       lastrev=lastrev,
                        name=name,
                        down=1,
                        path=path,
                        filename=filename,
                        downdate=format(Sys.time(),format='%Y/%m/%d %H:%M:%S')
-                       )
+    )
     dbSendPreparedQuery(db, sql, bind.data = valors)
   }
   return(uid)
 }
 
 #----------------------------------------------------------
-#Guardem fitxer format lliure ICO a Couch
+#Guardem fitxer format lliure ICO a Couch i retornem uid + vista en format dataframe
 #----------------------------------------------------------
-guardaICO <- function(dataJSON,filename='',filenamepath='',userid='') {
+guardaICO <- function(inFile,userid) {
   #Carreguem la db
   db <- getMetadataDB()
+  #Mirem si es tracta d'un Format GEO per fer visualització específica
+  res <- tryCatch({
+    filename<-inFile$datapath
+    #message(paste0('DBG1: ',inFile$datapath))
+    objGEO <- getGEO(filename=filename)
+    #Retornem info de visualitzacio de l'objecte GEO en format dataframe 
+    vista <- dfView(objGEO)
+    tipus<-toupper(class(objGEO))
+  }, error = function(err){
+    #Retornem info de visualització: Fitxer format desconegut
+    vista <- data.frame('File'=filename,'Content'='Unknown format')
+    tipus<-'NA'
+  })  
+  
+  #Guardem a persistència ICO 
+  #Recopilem informació del fitxer
+  info <- file.info(inFile$datapath)
+  #Tamany en bytes
+  tamany <- info$size  
+  #Llegim en format raw el fitxer sencer
+  fitxer_raw <- readBin(con=inFile$datapath,"raw",tamany)
+  #Convertim a string de bytes hexadecimal i passem a JSON
+  dataJSON <- toJSON(raw2hex(fitxer_raw,sep=''))
+  filename <- inFile$name
+  filenamepath <- inFile$datapath
+
   info<-existeixICO(filename,db)  
   # Si l'hem trobat no cal afegir-lo
   if (!is.null(info)){
     uid=info$uid
     message(paste('Found uid: ',uid,sep=''))
-    return(uid)
+    return(list(TRUE,uid,vista))
+    
   }
   ## Guardar fitxer a taula fitxers ICO
   resp<-ICOACouch(dataJSON,filename) 
   uid<-resp$id
   lastrev<-resp$rev
+  message(paste0('UID assignat: ',uid))
+  
+  ESTA CASCANT AQUEST INSERT PER UID DUPLICAT!!! NO SE XQ
+  TAMBE VEIG QUE PASSA PER LANTIC GUARDAICO 2 COPS (COMENTAT EL NOU XQ SEMBLA QUE NO CALIA)
+  
   sql = 'INSERT INTO icofiles (uid,lastrev,name,path,filename,loaddate,typefile,userowner) VALUES(:uid,:lastrev,:name,:path,:filename,:loaddate,:typefile,:userowner)'
   valors<-data.frame(uid=uid,
                      lastrev=lastrev,
@@ -295,7 +341,7 @@ nomGEO <- function(objGEO,filename, db){
 
 #--------------------------------------------------------------------------------------------
 #Mirem si tenim descarregat objecte GEO utilitzant metadades. 
-#Si el trobem, retornem uid Couch
+#Si el trobem, retornem registre de metadades
 #--------------------------------------------------------------------------------------------
 existeixGEO <- function(objGEO,nom, db){
   if(missing(db)) {
@@ -318,10 +364,9 @@ existeixGEO <- function(objGEO,nom, db){
   sql = paste('SELECT * FROM ',tablename,sep='')
   sql = paste(paste(paste(sql,' WHERE name = "',sep=''),nomreg,sep=''),'"',sep='')
   res = dbGetQuery(db, sql)
-  #Si ja el tenim retornem uid 
+  #Si ja el tenim retornem registre 
   if (nrow(res)>0){
-    uid=res$uid
-    return(uid)
+    return(res)
   } else {
     return(NULL)
   }
@@ -562,6 +607,47 @@ eliminaICO <- function(nom, userid, db){
   eliminaCouch(uid,rev)
   #Eliminem registre de la BD relacional (metadades)
   sql=paste0(paste0(paste0('DELETE FROM icofiles WHERE name = "'),nom),'"')
+  res = dbSendQuery(db, sql)
+  return(res)
+}  
+
+
+
+#----------------------------------------------------------
+# Elimina un fitxer GEO de les metadades i el seu document de Couch
+#----------------------------------------------------------
+eliminaGEO <- function(objGEO, nom, db){
+  if(missing(db)) {
+    #Carreguem la db
+    db <- getMetadataDB()
+  } 
+  #Mirem si tenim el fitxer a la BD JSON 
+  #No cal mirar permisos, els fitxers GEO són públics
+  reg=existeixGEO(objGEO, nom, db)
+  # Si no l'hem trobat sortim
+  if (is.null(reg)){
+    error<-paste('File not found',nom,sep=': ')
+    message(error)
+    return(list(FALSE, error))
+  }
+  uid=reg$uid
+  rev=reg$lastrev
+  #Eiminem registre de Couch
+  eliminaCouch(uid,rev)
+  #Eliminem registre de la BD relacional (metadades)
+  nomreg<-nom
+  switch(toupper(class(objGEO)),
+         'GSM'={tablename='gsm'},
+         'GPL'={tablename='gpl'},
+         'GSE'={tablename='gse'},
+         'GDS'={tablename='gds'},
+         'EXPRESSIONSET'={
+           tablename='gse'
+           paste(nomreg,'_matrix',sep='')
+         },
+         stop('Invalid GEO Object')
+  )       
+  sql=paste0(paste0(paste0(paste0('DELETE FROM ',tablename),' WHERE name = "'),nomreg),'"')
   res = dbSendQuery(db, sql)
   return(res)
 }  
