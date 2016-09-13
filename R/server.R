@@ -684,11 +684,11 @@ shinyServer(function(input, output, session) {
       db <- getMetadataDB()
       incatalegICO <- inDataCatalog(input$searchexperiment, toupper(input$typefilencbi), db)
       if (incatalegICO == TRUE) {
-        incatalegICOtext <- 'already upload to ICOcloud'
+        incatalegICOtext <- 'already uploaded to ICOcloud'
         return(HTML(paste(h4(input$searchexperiment," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperiment", "Download experiment"))))
       }
       else {
-        incatalegICOtext <- 'not upload to ICOcloud'
+        incatalegICOtext <- 'not uploaded to ICOcloud'
         return(HTML(paste(h4(input$searchexperiment," ",incatalegICOtext,style = "color: red;"),actionButton("submitexperiment", "Download experiment"))))
       }
     }
@@ -703,11 +703,11 @@ shinyServer(function(input, output, session) {
       db <- getMetadataDB()
       incatalegICO <- inDataCatalog(input$dataset, 'GSE', db)
       if (incatalegICO == TRUE) {
-        incatalegICOtext <- 'already upload to ICOcloud'
+        incatalegICOtext <- 'already uploaded to ICOcloud'
         return(HTML(paste(h4(input$dataset," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperimentdataset", "Download experiment"))))
       }
       else {
-        incatalegICOtext <- 'not upload to ICOcloud'
+        incatalegICOtext <- 'not uploaded to ICOcloud'
         return(HTML(paste(h4(input$dataset," ",incatalegICOtext,style = "color: red;"),actionButton("submitexperimentdataset", "Download experiment"))))
       }
     }
@@ -722,11 +722,11 @@ shinyServer(function(input, output, session) {
       db <- getMetadataDB()
       incatalegICO <- inDataCatalog(input$sample, 'GSM', db)
       if (incatalegICO == TRUE) {
-        incatalegICOtext <- 'already upload to ICOcloud'
+        incatalegICOtext <- 'already uploaded to ICOcloud'
         return(HTML(paste(h4(input$sample," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperimentsample", "Download experiment"))))
       }
       else {
-        incatalegICOtext <- 'not upload to ICOcloud'
+        incatalegICOtext <- 'not uploaded to ICOcloud'
         return(HTML(paste(h4(input$sample," ",incatalegICOtext,style = "color: red;"),actionButton("submitexperimentsample", "Download experiment"))))
       }
     }
@@ -754,7 +754,7 @@ shinyServer(function(input, output, session) {
         if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
         else incatalegICOtext <- 'No'
     
-        dataNCBI["Already upload to ICOcloud?"] <- incatalegICOtext #Add column
+        dataNCBI["Already uploaded to ICOcloud?"] <- incatalegICOtext #Add column
         dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
         names(dataNCBI) <- (paste(input$searchexperiment," metadata")) #Column title
         return(dataNCBI)
@@ -772,7 +772,7 @@ shinyServer(function(input, output, session) {
         if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
         else incatalegICOtext <- 'No'
         
-        dataNCBI["Already upload to ICOcloud?"] <- incatalegICOtext #Add column
+        dataNCBI["Already uploaded to ICOcloud?"] <- incatalegICOtext #Add column
         dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
         names(dataNCBI) <- (paste(input$dataset," metadata")) #Column title
         return(dataNCBI)
@@ -789,7 +789,7 @@ shinyServer(function(input, output, session) {
       if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
       else incatalegICOtext <- 'No'
       
-      dataNCBI["Already upload to ICOcloud?"] <- incatalegICOtext #Add column
+      dataNCBI["Already uploaded to ICOcloud?"] <- incatalegICOtext #Add column
       dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
       names(dataNCBI) <- (paste(input$sample," metadata")) #Column title
       return(dataNCBI)
@@ -811,7 +811,7 @@ shinyServer(function(input, output, session) {
     if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
     else incatalegICOtext <- 'No'
     
-    dataNCBI["Already upload to ICOcloud?"] <- incatalegICOtext #Add column
+    dataNCBI["Already uploaded to ICOcloud?"] <- incatalegICOtext #Add column
     dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
     names(dataNCBI) <- (paste(input$dataset," metadata")) #Column title
     return(dataNCBI)
@@ -832,7 +832,7 @@ shinyServer(function(input, output, session) {
     if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
     else incatalegICOtext <- 'No'
     
-    dataNCBI["Already upload to ICOcloud?"] <- incatalegICOtext #Add column
+    dataNCBI["Already uploaded to ICOcloud?"] <- incatalegICOtext #Add column
     dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
     names(dataNCBI) <- (paste(input$sample," metadata")) #Column title
     return(dataNCBI)
