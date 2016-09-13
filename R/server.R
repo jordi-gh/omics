@@ -629,7 +629,16 @@ shinyServer(function(input, output, session) {
     if (is.null(input$searchexperiment) || input$searchexperiment == "Enter text..."){
       return()
     }else {
-      return(h4(input$searchexperiment))
+      db <- getMetadataDB()
+      incatalegICO <- inDataCatalog(input$searchexperiment, toupper(input$typefilencbi), db)
+      if (incatalegICO == TRUE) {
+        incatalegICOtext <- 'already upload to ICOcloud'
+        return(h4(input$searchexperiment," ",incatalegICOtext,style = "color: green;"))
+      }
+      else {
+        incatalegICOtext <- 'not upload to ICOcloud'
+        return(h4(input$searchexperiment," ",incatalegICOtext,style = "color: red;"))
+      }
     }
     
   })
@@ -639,7 +648,16 @@ shinyServer(function(input, output, session) {
     if (is.null(input$dataset) || input$dataset == "Select DataSet Serie"){
       return()
     }else {
-      return(h4(input$dataset))
+      db <- getMetadataDB()
+      incatalegICO <- inDataCatalog(input$dataset, 'GSE', db)
+      if (incatalegICO == TRUE) {
+        incatalegICOtext <- 'already upload to ICOcloud'
+        return(h4(input$dataset," ",incatalegICOtext,style = "color: green;"))
+      }
+      else {
+        incatalegICOtext <- 'not upload to ICOcloud'
+        return(h4(input$dataset," ",incatalegICOtext,style = "color: red;"))
+      }
     }
     
   })
@@ -649,7 +667,16 @@ shinyServer(function(input, output, session) {
     if (is.null(input$sample) || input$sample == "Select DataSet Sample"){
       return()
     }else {
-      return(h4(input$sample))
+      db <- getMetadataDB()
+      incatalegICO <- inDataCatalog(input$sample, 'GSM', db)
+      if (incatalegICO == TRUE) {
+        incatalegICOtext <- 'already upload to ICOcloud'
+        return(h4(input$sample," ",incatalegICOtext,style = "color: green;"))
+      }
+      else {
+        incatalegICOtext <- 'not upload to ICOcloud'
+        return(h4(input$sample," ",incatalegICOtext,style = "color: red;"))
+      }
     }
     
   })
