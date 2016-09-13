@@ -127,7 +127,7 @@ shinyServer(function(input, output, session) {
                               sidebarLayout(
                                 sidebarPanel(
                                   h3('New ICO file'),br(),
-                                  radioButtons('typefileico', 'Select type file', choices = c('gpl','gsm','gse','gds')),
+                                  radioButtons('typefileico', 'Select type file', choices = c('none','gpl','gsm','gse','gds')),
                                   fileInput('file1', h4('Choose file to upload'))
                                 ),
                                 
@@ -162,14 +162,7 @@ shinyServer(function(input, output, session) {
                                 ),
                                 
                                 mainPanel(
-                                  uiOutput("metadataplatformtitle"),
-                                  dataTableOutput("metadataplatform"),
-                                  br(),
-                                  uiOutput("metadataserietitle"),
-                                  dataTableOutput("metadataserie"),
-                                  br(),
-                                  uiOutput("metadatasampletitle"),
-                                  dataTableOutput("metadatasample")
+                                  uiOutput('mytabsncbifiles')
                                 )
                               )
                      )
@@ -209,7 +202,8 @@ shinyServer(function(input, output, session) {
                      tabPanel("Hierarchical Clustering", id = "heatmapgse",
                               sidebarLayout(
                                 sidebarPanel(
-                                  selectizeInput("gseplot", "GSE", c('Select GSE','GSE976')),
+                                  uiOutput("choose_gse"),
+                                  #selectizeInput("gseplot", "GSE", c('Select GSE','GSE976')),
                                   downloadButton('downloadheatmap', 'Download Plot')
                                 ),
                                 mainPanel(
@@ -326,8 +320,27 @@ shinyServer(function(input, output, session) {
   # ---------------------------------------------------------------------  
   # Analisis1: Hierarchical Clustering Heatmap GSE
   # --------------------------------------------------------------------- 
+  output$choose_gse <- renderUI({
+    
+    # Se seleccionan todos los ficheros gse de NCBI y los de ICO de tipo gse pero que el 
+    # grupo de trabajo del usuario tenga permisos sobre ellos y que hayan sido compartidos con el grupo
+    # de este usuario
+    res <- myXfiles(db, USERPROFILE$Profile$username,'gse')
+
+    if (nrow(res)>0){
+      selectizeInput("gseplot", "Select GSE", choices = split(res$uid,res$filename)) 
+    } else {
+      selectizeInput("gseplot", "Select GSE", c('No GSE Data',""))
+    }
+    
+  })
+  
   plotInputHeatmap <- function(){
-        if (input$gseplot!="Select GSE" && input$gseplot!=""){
+        if (input$gseplot!="Select GSE" && input$gseplot!="" && input$gseplot!="No GSE Data"){
+          
+          #@TODO en input$gseplot esta el uid del fichero que está en COUCH para RECUPERAR
+          #@ EJEMPLO GSE976
+          
           destdir = file.path(gb_Rdir, 'BD')
           gse = getGEO(input$gseplot, destdir = destdir)[[1]]
           sdN = 3
@@ -369,23 +382,69 @@ shinyServer(function(input, output, session) {
   # ---------------------------------------------------------------------
   # Load NCBI
   # ---------------------------------------------------------------------
-  output$experiment <- renderDataTable({ 
+  output$experimenttable <- renderDataTable({ 
     submitExperiment() #Esperamos al submit
   },options = list(
     scrollX = TRUE
   ))
   
   submitExperiment <- eventReactive(input$submitexperiment,{ 
-    message('DBG: submitExperiment')
-    if (input$experimentupload!="Enter text..." && input$experimentupload!=""){
+
+    if (input$searchexperiment!="Enter text..." && input$searchexperiment!=""){
       destdir = file.path(gb_Rdir, 'BD')
       
-      ExperimentNCBI <- getGEO(input$experimentupload, destdir = destdir)
+      ExperimentNCBI <- getGEO(input$searchexperiment, destdir = destdir)
       
       #Guardem a persistència ICO
       #Compte: Enviem un 'named param' a la funció
       #http://blog.moertel.com/posts/2006-01-20-wondrous-oddities-rs-function-call-semantics.html
-      guardaGEO(ExperimentNCBI,accession=input$experimentupload)
+      guardaGEO(ExperimentNCBI,accession=input$searchexperiment)
+      # Retorna dataframe de visualització segons tipus d'objecte GEO
+      dfView(ExperimentNCBI)
+    }
+    
+  })
+  
+  output$experimenttableserie <- renderDataTable({ 
+    submitExperimentSerie() #Esperamos al submit
+  },options = list(
+    scrollX = TRUE
+  ))
+  
+  submitExperimentSerie <- eventReactive(input$submitexperimentdataset,{ 
+    
+    if (!is.null(input$dataset) || input$dataset != "Select DataSet Serie"){
+      destdir = file.path(gb_Rdir, 'BD')
+      
+      ExperimentNCBI <- getGEO(input$dataset, destdir = destdir)
+      
+      #Guardem a persistència ICO
+      #Compte: Enviem un 'named param' a la funció
+      #http://blog.moertel.com/posts/2006-01-20-wondrous-oddities-rs-function-call-semantics.html
+      guardaGEO(ExperimentNCBI,accession=input$dataset)
+      # Retorna dataframe de visualització segons tipus d'objecte GEO
+      dfView(ExperimentNCBI)
+    }
+    
+  })
+  
+  output$experimenttablesample <- renderDataTable({ 
+    submitExperimentSample() #Esperamos al submit
+  },options = list(
+    scrollX = TRUE
+  ))
+  
+  submitExperimentSample <- eventReactive(input$submitexperimentsample,{ 
+    
+    if (!is.null(input$sample) || input$sample != "Select DataSet Sample"){
+      destdir = file.path(gb_Rdir, 'BD')
+      
+      ExperimentNCBI <- getGEO(input$sample, destdir = destdir)
+      
+      #Guardem a persistència ICO
+      #Compte: Enviem un 'named param' a la funció
+      #http://blog.moertel.com/posts/2006-01-20-wondrous-oddities-rs-function-call-semantics.html
+      guardaGEO(ExperimentNCBI,accession=input$sample)
       # Retorna dataframe de visualització segons tipus d'objecte GEO
       dfView(ExperimentNCBI)
     }
@@ -508,6 +567,50 @@ shinyServer(function(input, output, session) {
   # ---------------------------------------------------------------------
   # Data Catalog NCBI
   # ---------------------------------------------------------------------
+  output$mytabsncbifiles = renderUI({
+    aDescripcionsTabs <- array() 
+    aDescripcionsTabs[1] <- 'GPL'
+    aDescripcionsTabs[2] <- 'GSE'
+    aDescripcionsTabs[3] <- 'GSM'
+    
+    aAccionsTabs <- array() 
+    
+    if (is.null(input$dataset) || input$dataset == "Select DataSet Serie") {nTabs = 1}
+    else if (is.null(input$sample) || input$sample == "Select DataSet Sample") {nTabs = 2}
+    else {nTabs = 3}
+    
+    myTabs = lapply(1:nTabs,
+                    function(i) {
+                      if (i==1){
+                        tabPanel(input$searchexperiment, id = 'gpltab',
+                                 uiOutput("metadataplatformtitle"),
+                                 br(),
+                                 dataTableOutput("metadataplatform"),
+                                 dataTableOutput("experimenttable")
+                        )         
+                      }
+                      else if (i==2){
+                        tabPanel(input$dataset, id = 'gsetab',
+                                 uiOutput("metadataserietitle"),
+                                 br(),
+                                 dataTableOutput("metadataserie"),
+                                 dataTableOutput("experimenttableserie")
+                        )
+                      }
+                      else {
+                        tabPanel(input$sample, id = 'gsmtab',
+                                 uiOutput("metadatasampletitle"),
+                                 br(),
+                                 dataTableOutput("metadatasample"),
+                                 dataTableOutput("experimenttablesample")
+                        )
+                      }
+                    }
+    )
+    
+    do.call(tabsetPanel, myTabs)
+  })
+  
   # Select inicial de DataSets
   output$choose_dataset <- renderUI({
     submitDataSetFilencbi() #Esperamos al submit
@@ -575,7 +678,16 @@ shinyServer(function(input, output, session) {
     if (is.null(input$searchexperiment) || input$searchexperiment == "Enter text..."){
       return()
     }else {
-      return(h4(input$searchexperiment))
+      db <- getMetadataDB()
+      incatalegICO <- inDataCatalog(input$searchexperiment, toupper(input$typefilencbi), db)
+      if (incatalegICO == TRUE) {
+        incatalegICOtext <- 'already uploaded to ICOcloud'
+        return(HTML(paste(h4(input$searchexperiment," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperiment", "Download experiment"))))
+      }
+      else {
+        incatalegICOtext <- 'not uploaded to ICOcloud'
+        return(HTML(paste(h4(input$searchexperiment," ",incatalegICOtext,style = "color: red;"),actionButton("submitexperiment", "Download experiment"))))
+      }
     }
     
   })
@@ -585,7 +697,16 @@ shinyServer(function(input, output, session) {
     if (is.null(input$dataset) || input$dataset == "Select DataSet Serie"){
       return()
     }else {
-      return(h4(input$dataset))
+      db <- getMetadataDB()
+      incatalegICO <- inDataCatalog(input$dataset, 'GSE', db)
+      if (incatalegICO == TRUE) {
+        incatalegICOtext <- 'already uploaded to ICOcloud'
+        return(HTML(paste(h4(input$dataset," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperimentdataset", "Download experiment"))))
+      }
+      else {
+        incatalegICOtext <- 'not uploaded to ICOcloud'
+        return(HTML(paste(h4(input$dataset," ",incatalegICOtext,style = "color: red;"),actionButton("submitexperimentdataset", "Download experiment"))))
+      }
     }
     
   })
@@ -595,7 +716,16 @@ shinyServer(function(input, output, session) {
     if (is.null(input$sample) || input$sample == "Select DataSet Sample"){
       return()
     }else {
-      return(h4(input$sample))
+      db <- getMetadataDB()
+      incatalegICO <- inDataCatalog(input$sample, 'GSM', db)
+      if (incatalegICO == TRUE) {
+        incatalegICOtext <- 'already uploaded to ICOcloud'
+        return(HTML(paste(h4(input$sample," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperimentsample", "Download experiment"))))
+      }
+      else {
+        incatalegICOtext <- 'not uploaded to ICOcloud'
+        return(HTML(paste(h4(input$sample," ",incatalegICOtext,style = "color: red;"),actionButton("submitexperimentsample", "Download experiment"))))
+      }
     }
     
   })
@@ -622,7 +752,7 @@ shinyServer(function(input, output, session) {
         if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
         else incatalegICOtext <- 'No'
     
-        dataNCBI["In ICO cloud?"] <- incatalegICOtext #Add column
+        dataNCBI["Already uploaded to ICOcloud?"] <- incatalegICOtext #Add column
         dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
         names(dataNCBI) <- (paste(input$searchexperiment," metadata")) #Column title
         return(dataNCBI)
@@ -640,7 +770,7 @@ shinyServer(function(input, output, session) {
         if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
         else incatalegICOtext <- 'No'
         
-        dataNCBI["In ICO cloud?"] <- incatalegICOtext #Add column
+        dataNCBI["Already uploaded to ICOcloud?"] <- incatalegICOtext #Add column
         dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
         names(dataNCBI) <- (paste(input$dataset," metadata")) #Column title
         return(dataNCBI)
@@ -657,7 +787,7 @@ shinyServer(function(input, output, session) {
       if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
       else incatalegICOtext <- 'No'
       
-      dataNCBI["In ICO cloud?"] <- incatalegICOtext #Add column
+      dataNCBI["Already uploaded to ICOcloud?"] <- incatalegICOtext #Add column
       dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
       names(dataNCBI) <- (paste(input$sample," metadata")) #Column title
       return(dataNCBI)
@@ -679,7 +809,7 @@ shinyServer(function(input, output, session) {
     if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
     else incatalegICOtext <- 'No'
     
-    dataNCBI["In ICO cloud?"] <- incatalegICOtext #Add column
+    dataNCBI["Already uploaded to ICOcloud?"] <- incatalegICOtext #Add column
     dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
     names(dataNCBI) <- (paste(input$dataset," metadata")) #Column title
     return(dataNCBI)
@@ -700,7 +830,7 @@ shinyServer(function(input, output, session) {
     if (incatalegICO == TRUE) incatalegICOtext <- 'Yes'
     else incatalegICOtext <- 'No'
     
-    dataNCBI["In ICO cloud?"] <- incatalegICOtext #Add column
+    dataNCBI["Already uploaded to ICOcloud?"] <- incatalegICOtext #Add column
     dataNCBI <- as.data.frame(t(dataNCBI)) #Transpose table
     names(dataNCBI) <- (paste(input$sample," metadata")) #Column title
     return(dataNCBI)

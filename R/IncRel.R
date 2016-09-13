@@ -163,9 +163,6 @@ guardaICO <- function(inFile,userid) {
   lastrev<-resp$rev
   message(paste0('UID assignat: ',uid))
   
-  ESTA CASCANT AQUEST INSERT PER UID DUPLICAT!!! NO SE XQ
-  TAMBE VEIG QUE PASSA PER LANTIC GUARDAICO 2 COPS (COMENTAT EL NOU XQ SEMBLA QUE NO CALIA)
-  
   sql = 'INSERT INTO icofiles (uid,lastrev,name,path,filename,loaddate,typefile,userowner) VALUES(:uid,:lastrev,:name,:path,:filename,:loaddate,:typefile,:userowner)'
   valors<-data.frame(uid=uid,
                      lastrev=lastrev,
@@ -581,6 +578,48 @@ getDataHome <- function (db, username){
   aDataHome['icoshare'] <- res$icosharecount
   
   return(aDataHome)
+}
+
+#----------------------------------------------------------
+# Retorna todos los ficheros de tipo typefile a los que tiene el acceso 
+# el usuario (tanto ficheros typefile NCBI como ICO tipo typefile como
+# ICO tipo typefile compartidos con el grupo del usuario)
+#----------------------------------------------------------
+myXfiles <- function (db, username,typefile){
+  
+  if(missing(db)) {
+    #Carreguem la db
+    db <- getMetadataDB()
+  }
+  
+  sqlncbi=paste0("select filename, uid from ", typefile)
+  
+  sqlmy=paste0("select filename, uid
+                from icofiles
+                where userowner in (
+                  select userid 
+                  from usuari_grup 
+                  where grupid in ( select distinct ug.grupid 
+                                    from 	usuari_grup ug, usuaris u 
+                                    where ug.userid = u.id and u.username = '",username,"')
+                )
+               and typefile='",typefile,"'")
+ 
+  sqlshare=paste0("select filename, uid
+                   from icofiles
+                   where uid in ( select uidfile as icosharecount 
+                                  from accessfiles 
+                                  where idgroup in (select distinct ug.grupid 
+                                                    from usuari_grup ug, usuaris u 
+                                                    where ug.userid = u.id and u.username = '",username,"'))
+                  and typefile='",typefile,"'")
+  
+  
+  sql = paste0(sqlncbi ," UNION ", sqlmy ," UNION ", sqlshare)
+  res = dbGetQuery(db, sql)
+
+  return(res)
+   
 }
 
 #----------------------------------------------------------
