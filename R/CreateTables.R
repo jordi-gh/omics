@@ -8,6 +8,7 @@ db <- getMetadataDB()
 dbSendQuery(conn = db,
             "CREATE TABLE gsm
             (uid TEXT PRIMARY KEY,
+             lastrev TEXT,
              name TEXT,
              down INT,
              path TEXT,
@@ -18,6 +19,7 @@ dbSendQuery(conn = db,
 dbSendQuery(conn = db,
             "CREATE TABLE gse
             (uid TEXT PRIMARY KEY,
+             lastrev TEXT,
              name TEXT,
              down INT,
              path TEXT,
@@ -28,21 +30,23 @@ dbSendQuery(conn = db,
 dbSendQuery(conn = db,
             "CREATE TABLE gpl
             (uid TEXT PRIMARY KEY,
-            name TEXT,
-            down INT,
-            path TEXT,
-            filename TEXT,
-            downdate TEXT
+             lastrev TEXT,
+             name TEXT,
+             down INT,
+             path TEXT,
+             filename TEXT,
+             downdate TEXT
             )
             ")
 dbSendQuery(conn = db,
             "CREATE TABLE gds
             (uid TEXT PRIMARY KEY,
-            name TEXT,
-            down INT,
-            path TEXT,
-            filename TEXT,
-            downdate TEXT
+             lastrev TEXT,
+             name TEXT,
+             down INT,
+             path TEXT,
+             filename TEXT,
+             downdate TEXT
             )
             ")
 
