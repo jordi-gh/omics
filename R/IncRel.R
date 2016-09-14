@@ -592,9 +592,9 @@ myXfiles <- function (db, username,typefile){
     db <- getMetadataDB()
   }
   
-  sqlncbi=paste0("select filename, uid from ", typefile)
+  sqlncbi=paste0("select name, uid from ", typefile)
   
-  sqlmy=paste0("select filename, uid
+  sqlmy=paste0("select name, uid
                 from icofiles
                 where userowner in (
                   select userid 
@@ -605,7 +605,7 @@ myXfiles <- function (db, username,typefile){
                 )
                and typefile='",typefile,"'")
  
-  sqlshare=paste0("select filename, uid
+  sqlshare=paste0("select name, uid
                    from icofiles
                    where uid in ( select uidfile as icosharecount 
                                   from accessfiles 

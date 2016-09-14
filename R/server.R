@@ -328,7 +328,7 @@ shinyServer(function(input, output, session) {
     res <- myXfiles(db, USERPROFILE$Profile$username,'gse')
 
     if (nrow(res)>0){
-      selectizeInput("gseplot", "Select GSE", choices = split(res$uid,res$filename)) 
+      selectizeInput("gseplot", "Select GSE", choices = split(res$uid,res$name)) 
     } else {
       selectizeInput("gseplot", "Select GSE", c('No GSE Data',""))
     }
@@ -340,9 +340,10 @@ shinyServer(function(input, output, session) {
           
           #@TODO en input$gseplot esta el uid del fichero que está en COUCH para RECUPERAR
           #@ EJEMPLO GSE976
+          gse=CouchAGEO(input$gseplot)
           
-          destdir = file.path(gb_Rdir, 'BD')
-          gse = getGEO(input$gseplot, destdir = destdir)[[1]]
+          #destdir = file.path(gb_Rdir, 'BD')
+          #gse = getGEO(input$gseplot, destdir = destdir)[[1]]
           sdN = 3
           sds = apply(log2(exprs(gse)+0.0001),1,sd)
           heatmap.2(log2(exprs(gse)+0.0001)[sds>sdN,],trace='none',scale='row')
