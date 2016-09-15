@@ -299,7 +299,10 @@ shinyServer(function(input, output, session) {
           
           # Ayuda
           tabPanel("Help", 
-                   icon = icon("fa fa-question"), id = "help"
+                   icon = icon("fa fa-question"), id = "help",
+                   fluidRow(
+                   mainPanel(includeHTML("www/help.html"))
+                   )
           )
           
         )
