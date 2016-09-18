@@ -1,5 +1,6 @@
 #library(RJSONIO)
-library(rjson)
+#library(rjson)
+library(jsonlite)
 library(RCurl)
 #install.packages("R4CouchDB")
 library(R4CouchDB)
