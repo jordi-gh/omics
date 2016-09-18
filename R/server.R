@@ -686,7 +686,7 @@ shinyServer(function(input, output, session) {
       incatalegICO <- inDataCatalog(input$searchexperiment, toupper(input$typefilencbi), db)
       if (incatalegICO == TRUE) {
         incatalegICOtext <- 'already uploaded to ICOcloud'
-        return(HTML(paste(h4(input$searchexperiment," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperiment", "Download experiment"))))
+        return(HTML(paste(h4(input$searchexperiment," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperiment", "Show experiment"))))
       }
       else {
         incatalegICOtext <- 'not uploaded to ICOcloud'
@@ -705,7 +705,7 @@ shinyServer(function(input, output, session) {
       incatalegICO <- inDataCatalog(input$dataset, 'GSE', db)
       if (incatalegICO == TRUE) {
         incatalegICOtext <- 'already uploaded to ICOcloud'
-        return(HTML(paste(h4(input$dataset," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperimentdataset", "Download experiment"))))
+        return(HTML(paste(h4(input$dataset," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperimentdataset", "Show experiment"))))
       }
       else {
         incatalegICOtext <- 'not uploaded to ICOcloud'
@@ -724,7 +724,7 @@ shinyServer(function(input, output, session) {
       incatalegICO <- inDataCatalog(input$sample, 'GSM', db)
       if (incatalegICO == TRUE) {
         incatalegICOtext <- 'already uploaded to ICOcloud'
-        return(HTML(paste(h4(input$sample," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperimentsample", "Download experiment"))))
+        return(HTML(paste(h4(input$sample," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperimentsample", "Show experiment"))))
       }
       else {
         incatalegICOtext <- 'not uploaded to ICOcloud'
