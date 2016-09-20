@@ -212,18 +212,20 @@ shinyServer(function(input, output, session) {
                                 )
                               )
                      ),
-                     tabPanel("GSM bins", id = "gsebins",
+                     tabPanel("GSM bins", id = "gsmbins",
                               sidebarLayout(
                                 sidebarPanel(
-                                  sliderInput("bins",
-                                              "Number of bins:",
-                                              min = 1,
-                                              max = 20,
-                                              value = 10)
+                                  uiOutput("choose_gsm_bins")
                                 ),
                                 
                                 # Show a plot of the generated distribution
                                 mainPanel(
+                                  tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
+                                  sliderInput("bins",
+                                              "Number of bins:",
+                                              min = 1,
+                                              max = 20,
+                                              value = 10),
                                   plotOutput("distPlot")
                                 )
                               )
@@ -368,10 +370,26 @@ shinyServer(function(input, output, session) {
   # ---------------------------------------------------------------------  
   # Analisis2: GSM Bins
   # --------------------------------------------------------------------- 
-  output$distPlot <- renderPlot({
+  output$choose_gsm_bins <- renderUI({
+    
+    # Se seleccionan todos los ficheros gsm de NCBI y los de ICO de tipo gsm pero que el 
+    # grupo de trabajo del usuario tenga permisos sobre ellos y que hayan sido compartidos con el grupo
+    # de este usuario
+    res <- myXfiles(db, USERPROFILE$Profile$username,'gsm')
+    
+    if (nrow(res)>0){
+      selectizeInput("gsmbinsplot", "Select GSM", choices = split(res$uid,res$name)) 
+    } else {
+      selectizeInput("gsmbinsplot", "Select GSM", c('No GSM Data',""))
+    }
+    
+  })
+  
+  plotInputGSMbins <- function(){
     destdir = file.path(gb_Rdir, 'BD')
     
-    ExperimentNCBI <- getGEO("GSM320590", destdir = destdir)
+    # ExperimentNCBI <- getGEO(input$gsmbinsplot, destdir = destdir)
+    ExperimentNCBI <- getGEO('GSM320590', destdir = destdir)
     cols <- c("VALUE")
     
     Value <- Table(ExperimentNCBI)[,cols]
@@ -380,6 +398,10 @@ shinyServer(function(input, output, session) {
     # draw the histogram with the specified number of bins
     hist(as.double(Value), breaks = bins, col = 'red', border = 'white',
          main = 'GSM320590 values', labels = TRUE)
+  }
+  
+  output$distPlot <- renderPlot({
+    print(plotInputGSMbins())
   })
 
   
