@@ -388,16 +388,16 @@ shinyServer(function(input, output, session) {
   plotInputGSMbins <- function(){
     destdir = file.path(gb_Rdir, 'BD')
     
-    # ExperimentNCBI <- getGEO(input$gsmbinsplot, destdir = destdir)
-    ExperimentNCBI <- getGEO('GSM320590', destdir = destdir)
-    cols <- c("VALUE")
+    gsm=CouchAGEO(input$gsmbinsplot)
+    ExperimentNCBI <- getGEO(gsm$header$geo_accession, destdir = destdir)
     
+    cols <- c("VALUE")
     Value <- Table(ExperimentNCBI)[,cols]
     bins <- seq(min(as.double(Value)), max(as.double(Value)), length.out = input$bins + 1)
     
     # draw the histogram with the specified number of bins
     hist(as.double(Value), breaks = bins, col = 'red', border = 'white',
-         main = 'GSM320590 values', labels = TRUE)
+         main = paste(gsm$header$geo_accession," values"), labels = TRUE)
   }
   
   output$distPlot <- renderPlot({
