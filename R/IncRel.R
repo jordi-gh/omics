@@ -174,7 +174,7 @@ guardaICO <- function(inFile,userid) {
                      userowner=userid
   )
   dbSendPreparedQuery(db, sql, bind.data = valors)
-  return(uid)
+  return(list(TRUE,uid,vista))
 }  
 
 #--------------------------------------------------------------------------------------------
