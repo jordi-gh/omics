@@ -212,18 +212,20 @@ shinyServer(function(input, output, session) {
                                 )
                               )
                      ),
-                     tabPanel("GSM bins", id = "gsebins",
+                     tabPanel("GSM bins", id = "gsmbins",
                               sidebarLayout(
                                 sidebarPanel(
-                                  sliderInput("bins",
-                                              "Number of bins:",
-                                              min = 1,
-                                              max = 20,
-                                              value = 10)
+                                  uiOutput("choose_gsm_bins")
                                 ),
                                 
                                 # Show a plot of the generated distribution
                                 mainPanel(
+                                  tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
+                                  sliderInput("bins",
+                                              "Number of bins:",
+                                              min = 1,
+                                              max = 20,
+                                              value = 10),
                                   plotOutput("distPlot")
                                 )
                               )
@@ -368,18 +370,38 @@ shinyServer(function(input, output, session) {
   # ---------------------------------------------------------------------  
   # Analisis2: GSM Bins
   # --------------------------------------------------------------------- 
-  output$distPlot <- renderPlot({
+  output$choose_gsm_bins <- renderUI({
+    
+    # Se seleccionan todos los ficheros gsm de NCBI y los de ICO de tipo gsm pero que el 
+    # grupo de trabajo del usuario tenga permisos sobre ellos y que hayan sido compartidos con el grupo
+    # de este usuario
+    res <- myXfiles(db, USERPROFILE$Profile$username,'gsm')
+    
+    if (nrow(res)>0){
+      selectizeInput("gsmbinsplot", "Select GSM", choices = split(res$uid,res$name)) 
+    } else {
+      selectizeInput("gsmbinsplot", "Select GSM", c('No GSM Data',""))
+    }
+    
+  })
+  
+  plotInputGSMbins <- function(){
     destdir = file.path(gb_Rdir, 'BD')
     
-    ExperimentNCBI <- getGEO("GSM320590", destdir = destdir)
-    cols <- c("VALUE")
+    gsm=CouchAGEO(input$gsmbinsplot)
+    ExperimentNCBI <- getGEO(gsm$header$geo_accession, destdir = destdir)
     
+    cols <- c("VALUE")
     Value <- Table(ExperimentNCBI)[,cols]
     bins <- seq(min(as.double(Value)), max(as.double(Value)), length.out = input$bins + 1)
     
     # draw the histogram with the specified number of bins
     hist(as.double(Value), breaks = bins, col = 'red', border = 'white',
-         main = 'GSM320590 values', labels = TRUE)
+         main = paste(gsm$header$geo_accession," values"), labels = TRUE)
+  }
+  
+  output$distPlot <- renderPlot({
+    print(plotInputGSMbins())
   })
 
   
@@ -593,7 +615,9 @@ shinyServer(function(input, output, session) {
                         tabPanel(input$searchexperiment, id = 'gpltab',
                                  uiOutput("metadataplatformtitle"),
                                  br(),
+                                 tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
                                  dataTableOutput("metadataplatform"),
+                                 tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
                                  dataTableOutput("experimenttable")
                         )         
                       }
@@ -601,7 +625,9 @@ shinyServer(function(input, output, session) {
                         tabPanel(input$dataset, id = 'gsetab',
                                  uiOutput("metadataserietitle"),
                                  br(),
+                                 tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
                                  dataTableOutput("metadataserie"),
+                                 tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
                                  dataTableOutput("experimenttableserie")
                         )
                       }
@@ -609,7 +635,9 @@ shinyServer(function(input, output, session) {
                         tabPanel(input$sample, id = 'gsmtab',
                                  uiOutput("metadatasampletitle"),
                                  br(),
+                                 tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
                                  dataTableOutput("metadatasample"),
+                                 tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
                                  dataTableOutput("experimenttablesample")
                         )
                       }
@@ -690,8 +718,7 @@ shinyServer(function(input, output, session) {
       incatalegICO <- inDataCatalog(input$searchexperiment, toupper(input$typefilencbi), db)
       if (incatalegICO == TRUE) {
         incatalegICOtext <- 'already uploaded to ICOcloud'
-        dwnlabel <- paste0(paste0('Download ',input$searchexperiment),' from NCBI')
-        return(HTML(paste(h4(input$searchexperiment," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperiment", dwnlabel))))
+        return(HTML(paste(h4(input$searchexperiment," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperiment", "Show experiment"))))
       }
       else {
         incatalegICOtext <- 'not uploaded to ICOcloud'
@@ -713,7 +740,7 @@ shinyServer(function(input, output, session) {
       incatalegICO <- inDataCatalog(input$dataset, 'GSE', db)
       if (incatalegICO == TRUE) {
         incatalegICOtext <- 'already uploaded to ICOcloud'
-        return(HTML(paste(h4(input$dataset," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperimentdataset", "Download experiment GSE"))))
+        return(HTML(paste(h4(input$dataset," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperimentdataset", "Show experiment"))))
       }
       else {
         incatalegICOtext <- 'not uploaded to ICOcloud'
@@ -732,7 +759,7 @@ shinyServer(function(input, output, session) {
       incatalegICO <- inDataCatalog(input$sample, 'GSM', db)
       if (incatalegICO == TRUE) {
         incatalegICOtext <- 'already uploaded to ICOcloud'
-        return(HTML(paste(h4(input$sample," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperimentsample", "Download experiment GSM"))))
+        return(HTML(paste(h4(input$sample," ",incatalegICOtext,style = "color: green;"),actionButton("submitexperimentsample", "Show experiment"))))
       }
       else {
         incatalegICOtext <- 'not uploaded to ICOcloud'
