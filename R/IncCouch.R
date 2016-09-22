@@ -1,48 +1,50 @@
 #library(RJSONIO)
-#library(rjson)
-library(jsonlite)
+library(rjson)
+#library(jsonlite)
 library(RCurl)
 #install.packages("R4CouchDB")
 library(R4CouchDB)
+
+source(file.path(gb_Rdir, 'IncGEO.R'))
 
 #########################################################################
 #Cal tenir instal?lat i actiu couchdb i una bd creada amb el nom 'geodb'
 #########################################################################
 
-GeoACouch_old <- function(objGEO,nom) {
-  #Demanem un UUID a CouchDB. Ho podriem fer nosaltres amb llibraria R uuid
-  #Caldra veure si es una millor opcio
-  response <- fromJSON(getURL("http://localhost:5984/_uuids"))
-  uid=response$uuid
-  #Convertim taula de dades a JSON, si en te
-  tipusGEO <- toupper(class(objGEO))
-  if (tipusGEO =='EXPRESSIONSET'){
-    eset=toJSON(objGEO)
-    newreg<-toJSON(list(nom=nom,tipus=tipusGEO,expression_set=eset))
-  } else if (tipusGEO=='GSE'){
-    #Convertim metadades a JSON
-    metadades<-toJSON(Meta(objGEO))
-    #Convertim llista de GPLs a JSON
-    gpls<-toJSON(objGEO@gpls)
-    #Convertim llista de GSMs a JSON
-    gsms<-toJSON(objGEO@gsms)
-    #Preparem registre per inserir a BD
-    newreg<-toJSON(list(nom=nom,tipus=tipusGEO,metadades=metadades,gpls=gpls,gsms=gsms))
-  }
-  else {
-    taula<-toJSON(Table(objGEO))
-    #Convertim metadades a JSON
-    metadades<-toJSON(Meta(objGEO))
-    #Preparem registre per inserir a BD
-    newreg<-toJSON(list(nom=nom,tipus=tipusGEO,metadades=metadades,taula=taula))
-  }
-  response<-fromJSON(getURL(paste("http://localhost:5984/geodb/",uid,sep=""),
-         customrequest="PUT",
-         httpheader=c('Content-Type'='application/json'),
-         postfields=newreg))
-  #Retornem dades registre guardar-les a model relacional
-  return (response)
-}
+# GeoACouch_old <- function(objGEO,nom) {
+#   #Demanem un UUID a CouchDB. Ho podriem fer nosaltres amb llibraria R uuid
+#   #Caldra veure si es una millor opcio
+#   response <- fromJSON(getURL("http://localhost:5984/_uuids"))
+#   uid=response$uuid
+#   #Convertim taula de dades a JSON, si en te
+#   tipusGEO <- toupper(class(objGEO))
+#   if (tipusGEO =='EXPRESSIONSET'){
+#     eset=toJSON(objGEO)
+#     newreg<-toJSON(list(nom=nom,tipus=tipusGEO,expression_set=eset))
+#   } else if (tipusGEO=='GSE'){
+#     #Convertim metadades a JSON
+#     metadades<-toJSON(Meta(objGEO))
+#     #Convertim llista de GPLs a JSON
+#     gpls<-toJSON(objGEO@gpls)
+#     #Convertim llista de GSMs a JSON
+#     gsms<-toJSON(objGEO@gsms)
+#     #Preparem registre per inserir a BD
+#     newreg<-toJSON(list(nom=nom,tipus=tipusGEO,metadades=metadades,gpls=gpls,gsms=gsms))
+#   }
+#   else {
+#     taula<-toJSON(Table(objGEO))
+#     #Convertim metadades a JSON
+#     metadades<-toJSON(Meta(objGEO))
+#     #Preparem registre per inserir a BD
+#     newreg<-toJSON(list(nom=nom,tipus=tipusGEO,metadades=metadades,taula=taula))
+#   }
+#   response<-fromJSON(getURL(paste("http://localhost:5984/geodb/",uid,sep=""),
+#          customrequest="PUT",
+#          httpheader=c('Content-Type'='application/json'),
+#          postfields=newreg))
+#   #Retornem dades registre guardar-les a model relacional
+#   return (response)
+# }
 
 GeoACouch <- function(objGEO,nom) {
   #Demanem un UUID a CouchDB. Ho podriem fer nosaltres amb llibraria R uuid
@@ -51,7 +53,9 @@ GeoACouch <- function(objGEO,nom) {
   uid=response$uuid
   #Convertim objecte a JSON
   classeGEO <- class(objGEO)
-  jsonGEO=toJSON(objGEO)
+ # jsonGEO=jsonlite::toJSON(objGEO)
+  # jsonGEO=toJSON(raw2hex(serialize(objGEO,NULL),sep=''))
+  jsonGEO <- objecteAJSON(objGEO)
   newreg<-toJSON(list(nom=nom,classe=classeGEO,objecte=jsonGEO))
   response<-fromJSON(getURL(paste("http://localhost:5984/geodb/",uid,sep=""),
          customrequest="PUT",
@@ -108,12 +112,19 @@ CouchAGEO <- function(uid){
   #Control classe vàlida
   if(!is.element(classeGEO,c('ExpressionSet','GPL','GSM','GDS','GSE'))){
     return(FALSE) #No és tipus GEO reconegut
-  }  
+  }
   objGEO=new(classeGEO)
-  objGEO<-fromJSON(llistareg['objecte'])
+  #objGEO<-jsonlite::fromJSON(llistareg['objecte'])
+  # obj_hex <- fromJSON(llistareg['objecte']) 
+  # obj_raw <- wkb::hex2raw(obj_hex)
+  # objGEO <- unserialize(obj_raw)
+  objGEO<-JSONAObjecte(llistareg['objecte'])
   return(objGEO)
 }
-
+# CouchAGEO <- function(uid){
+#   objGEO<-getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GSE976_series_matrix.txt.gz",GSEMatrix=false)
+#   return(objGEO)
+# }
 
 #Eliminar document de couch per uid
 eliminaCouch <- function(uid=NULL,rev=NULL){
