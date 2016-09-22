@@ -611,7 +611,9 @@ shinyServer(function(input, output, session) {
                         tabPanel(input$searchexperiment, id = 'gpltab',
                                  uiOutput("metadataplatformtitle"),
                                  br(),
+                                 tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
                                  dataTableOutput("metadataplatform"),
+                                 tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
                                  dataTableOutput("experimenttable")
                         )         
                       }
@@ -619,7 +621,9 @@ shinyServer(function(input, output, session) {
                         tabPanel(input$dataset, id = 'gsetab',
                                  uiOutput("metadataserietitle"),
                                  br(),
+                                 tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
                                  dataTableOutput("metadataserie"),
+                                 tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
                                  dataTableOutput("experimenttableserie")
                         )
                       }
@@ -627,7 +631,9 @@ shinyServer(function(input, output, session) {
                         tabPanel(input$sample, id = 'gsmtab',
                                  uiOutput("metadatasampletitle"),
                                  br(),
+                                 tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
                                  dataTableOutput("metadatasample"),
+                                 tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
                                  dataTableOutput("experimenttablesample")
                         )
                       }
