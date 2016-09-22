@@ -115,12 +115,29 @@ validaColumnes <- function(colsval, colsdisp) {
   return(colsview)
 }
 
+#Convertir qualsevol objecte a JSON
+#Les funcions toJSON de rjson,jsonlite i RJSONIO tenen problemes amb
+#alguns objectes R, ja que algunes classes GEO no implementen funcions toJSON internes 
+#(ExpressionSet, per exemple)
+#Aquesta funció genèrica (i per tant menys optimitzada) serialitza l'objecte en 
+#bytes, ho converteix a hexadecimal i ho transforma en una cadena JSON. 
+#Així evitem qualsevol problemàtica de conversió ja que la serialització és nativa
+#de R per a qualsevol objecte
+objecteAJSON <- function(objecte){
+  obj_raw<-serialize(objecte,NULL)
+  obj_hex<-raw2hex(obj_raw,sep='')
+  obj_json<-toJSON(obj_hex)
+  return(obj_json)
+  
+}
 
-# type <- substr(input$experimentupload, 0, 3)
-# if (type == 'GPL') cols <- c("ID", "Gene name") #c("ID", "Gene Symbol", "ENTREZ_GENE_ID")
-# else if (type == 'GSM') cols <- c("ID_REF",	"VALUE")
-# else if (type == 'GDS') cols <- c("ID_REF",	"IDENTIFIER")
-# 
-# if (type == 'GSE') exprs(ExperimentNCBI[[1]])
-# else Table(ExperimentNCBI)[,cols]
+#Funció inversa de l'anterior
+JSONAObjecte <- function(cadenajson){
+  obj_hex <- fromJSON(cadenajson) 
+  obj_raw <- wkb::hex2raw(obj_hex)
+  obj <- unserialize(obj_raw)
+  return(obj)
+  
+}
+
 
