@@ -9,6 +9,9 @@ library(DT)
 library(RSQLite)
 library(gplots)
 library(PKI)
+#library(jsonlite)
+#library(RJSONIO)
+library(rjson)
 
 ## Carregar variables d'entorn local
 source('ConfigLocal.R')
@@ -17,6 +20,11 @@ source('ConfigGlobal.R')
 ##Carregar includes
 source(file.path(gb_Rdir, 'IncRel.R'))
 source(file.path(gb_Rdir, 'IncGEO.R'))
+
+#especifiquem que utilitzarem funcions de conversió JSON de RJSONIO, 
+#Les estàndard de rjson poden donar errors amb objectes GEO (S4 class)
+toJSON <- rjson::toJSON
+fromJSON <- rjson::fromJSON
 
 options(shiny.maxRequestSize=500*1024^2)
 
@@ -418,28 +426,17 @@ shinyServer(function(input, output, session) {
 
     if (input$searchexperiment!="Enter text..." && input$searchexperiment!=""){
       destdir = file.path(gb_Rdir, 'BD')
-      tryCatch({
-         ExperimentNCBI <- getGEO(input$searchexperiment, destdir = destdir)
-      }, error = function(err){
-        sError <- paste0('Could not get GEO file from NCBI: ',input$searchexperiment)
-        stop(sError)
-        message(paste0(paste0(sError,' - '),err))
-      })
+      
+      ExperimentNCBI <- getGEO(input$searchexperiment, destdir = destdir)
+      #ExperimentNCBI<-getGEO(filename="C:\\Jordi\\Master\\TFM\\DEV\\R\\BD\\GSE976_series_matrix.txt.gz",GSEMatrix=false)
       #Guardem a persistència ICO
       #Compte: Enviem un 'named param' a la funció
       #http://blog.moertel.com/posts/2006-01-20-wondrous-oddities-rs-function-call-semantics.html
-      #guardaGEO(ExperimentNCBI,accession=input$searchexperiment)
+      guardaGEO(ExperimentNCBI,accession=input$searchexperiment)
       # Retorna dataframe de visualització segons tipus d'objecte GEO
       dfView(ExperimentNCBI)
     }
     
-  })
-  
-  uploadicocloud <- eventReactive(input$uploadicocloud,{
-    message('upload ico clouuuuud')
-    if (input$searchexperiment!="Enter text..." && input$searchexperiment!=""){
-      stop('yeaaaaahhhh')
-    }  
   })
   
   output$experimenttableserie <- renderDataTable({ 
@@ -590,6 +587,13 @@ shinyServer(function(input, output, session) {
       res[[3]]
     }  
     
+    #DEBUG: Recuperem fitxer de Couch
+    #res<-downloadNoGEO("C:\\Jordi\\Master\\TFM\\DEV\\R\\dadesICO\\downfile.xlsx",'Gene expression_ log2_test.xlsx',3)
+    #DEBUG: Prova Eliminem fitxer de couch
+    #debug(eliminaCouch)
+    #res<-eliminaICO('13.swf',3,db)
+    #res<-eliminaGEO('13.swf',3,db)
+    
   },options = list(
     scrollX = TRUE
   ))  
@@ -722,10 +726,7 @@ shinyServer(function(input, output, session) {
       }
       else {
         incatalegICOtext <- 'not uploaded to ICOcloud'
-        dwnlabel <- paste0(paste0('Download ',input$searchexperiment),' from NCBI')
-        uplabel <- paste0(paste0('Upload ',input$searchexperiment),' to ICO Cloud')
-        #return(HTML(paste(h4(input$searchexperiment," ",incatalegICOtext,style = "color: red;"),actionButton("submitexperiment", "Download experiment"))))
-        return(HTML(paste(h4(input$searchexperiment," ",incatalegICOtext,style = "color: red;"),actionButton("submitexperiment", dwnlabel),actionButton("uploadicocloud",uplabel))))
+        return(HTML(paste(h4(input$searchexperiment," ",incatalegICOtext,style = "color: red;"),actionButton("submitexperiment", "Download experiment"))))
       }
     }
     
@@ -744,7 +745,7 @@ shinyServer(function(input, output, session) {
       }
       else {
         incatalegICOtext <- 'not uploaded to ICOcloud'
-        return(HTML(paste(h4(input$dataset," ",incatalegICOtext,style = "color: red;"),actionButton("submitexperimentdataset", "Download experiment GSE"))))
+        return(HTML(paste(h4(input$dataset," ",incatalegICOtext,style = "color: red;"),actionButton("submitexperimentdataset", "Download experiment"))))
       }
     }
     
@@ -763,7 +764,7 @@ shinyServer(function(input, output, session) {
       }
       else {
         incatalegICOtext <- 'not uploaded to ICOcloud'
-        return(HTML(paste(h4(input$sample," ",incatalegICOtext,style = "color: red;"),actionButton("submitexperimentsample", "Download experiment GSM"))))
+        return(HTML(paste(h4(input$sample," ",incatalegICOtext,style = "color: red;"),actionButton("submitexperimentsample", "Download experiment"))))
       }
     }
     
@@ -778,7 +779,7 @@ shinyServer(function(input, output, session) {
       return()
     }
     if(input$typefilencbi == 'gpl'){
-      #message('DBG:submitDataSetFilencbiTable GPL')
+      message('DBG:submitDataSetFilencbiTable GPL')
       con <- dbConnect(SQLite(),gb_geoSQLFile)
       sql <- paste("SELECT *",
                    " FROM gpl",
