@@ -341,7 +341,7 @@ shinyServer(function(input, output, session) {
     res <- myXfiles(db, USERPROFILE$Profile$username,'gse')
 
     if (nrow(res)>0){
-      selectizeInput("gseplot", "Select GSE", choices = split(res$uid,res$name)) 
+      selectizeInput("gseplot", "Select GSE", choices = c("Select GSE",split(res$uid,res$name))) 
     } else {
       selectizeInput("gseplot", "Select GSE", c('No GSE Data',""))
     }
@@ -386,7 +386,7 @@ shinyServer(function(input, output, session) {
     res <- myXfiles(db, USERPROFILE$Profile$username,'gsm')
     
     if (nrow(res)>0){
-      selectizeInput("gsmbinsplot", "Select GSM", choices = split(res$uid,res$name)) 
+      selectizeInput("gsmbinsplot", "Select GSM", choices = c("Select GSM",split(res$uid,res$name))) 
     } else {
       selectizeInput("gsmbinsplot", "Select GSM", c('No GSM Data',""))
     }
@@ -394,18 +394,20 @@ shinyServer(function(input, output, session) {
   })
   
   plotInputGSMbins <- function(){
-    destdir = file.path(gb_Rdir, 'BD')
-    
-    gsm=CouchAGEO(input$gsmbinsplot)
-    # ExperimentNCBI <- getGEO(gsm$header$geo_accession, destdir = destdir)
-    
-    cols <- c("VALUE")
-    Value <- Table(gsm)[,cols]
-    bins <- seq(min(as.double(Value)), max(as.double(Value)), length.out = input$bins + 1)
-    
-    # draw the histogram with the specified number of bins
-    hist(as.double(Value), breaks = bins, col = 'red', border = 'white',
-         main = paste(Meta(gsm)$geo_accession," values"), labels = TRUE)
+    if (input$gsmbinsplot!="Select GSM" && input$gsmbinsplot!=""){
+      destdir = file.path(gb_Rdir, 'BD')
+      
+      gsm=CouchAGEO(input$gsmbinsplot)
+      # ExperimentNCBI <- getGEO(gsm$header$geo_accession, destdir = destdir)
+      
+      cols <- c("VALUE")
+      Value <- Table(gsm)[,cols]
+      bins <- seq(min(as.double(Value)), max(as.double(Value)), length.out = input$bins + 1)
+      
+      # draw the histogram with the specified number of bins
+      hist(as.double(Value), breaks = bins, col = 'red', border = 'white',
+           main = paste(Meta(gsm)$geo_accession," values"), labels = TRUE)
+    }
   }
   
   output$distPlot <- renderPlot({
