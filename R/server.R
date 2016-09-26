@@ -237,7 +237,20 @@ shinyServer(function(input, output, session) {
                                   plotOutput("distPlot")
                                 )
                               )
-                      )
+                      ),
+                     tabPanel("GSM boxplot", id = "gsmboxplot",
+                              sidebarLayout(
+                                sidebarPanel(
+                                  uiOutput("choose_gsm_boxplot")
+                                ),
+                                
+                                # Show a plot of the generated distribution
+                                mainPanel(
+                                  tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
+                                  plotOutput("distBoxplot")
+                                )
+                              )
+                     )
                    )
           ),
           
@@ -413,7 +426,54 @@ shinyServer(function(input, output, session) {
   output$distPlot <- renderPlot({
     print(plotInputGSMbins())
   })
+  
+  # ---------------------------------------------------------------------  
+  # Analisis3: GSM Boxplot
+  # --------------------------------------------------------------------- 
+  output$choose_gsm_boxplot <- renderUI({
+    
+    # Se seleccionan todos los ficheros gsm de NCBI y los de ICO de tipo gsm pero que el 
+    # grupo de trabajo del usuario tenga permisos sobre ellos y que hayan sido compartidos con el grupo
+    # de este usuario
+    res <- myXfiles(db, USERPROFILE$Profile$username,'gsm')
+    
+    if (nrow(res)>0){
+      selectizeInput("gsmboxplot", "Select GSM", choices = c("Select GSM",split(res$uid,res$name))) 
+    } else {
+      selectizeInput("gsmboxplot", "Select GSM", c('No GSM Data',""))
+    }
+    
+  })
+  
+  plotInputGSMboxplot <- function(){
+    if (input$gsmboxplot!="Select GSM" && input$gsmboxplot!=""){
+      destdir = file.path(gb_Rdir, 'BD')
+      
+      gsm=CouchAGEO(input$gsmboxplot)
+      # ExperimentNCBI <- getGEO(gsm$header$geo_accession, destdir = destdir)
 
+      cols <- c("VALUE")
+      Value <- Table(gsm)[,cols]
+      # bins <- seq(min(as.double(Value)), max(as.double(Value)), length.out = input$bins + 1)
+      # 
+      # # draw the histogram with the specified number of bins
+      # hist(as.double(Value), breaks = bins, col = 'red', border = 'white',
+      #      main = paste(Meta(gsm)$geo_accession," values"), labels = TRUE)
+      boxplot(as.double(Value),                              # x variable, y variable
+              notch = T,                                     # Draw notch
+              las = 1,                                       # Orientate the axis tick labels
+              xlab = Meta(gsm)$geo_accession,                # X-axis label
+              ylab = "VALUES",                               # Y-axis label
+              main = Meta(gsm)$geo_accession,                # Plot title
+              cex.lab = 1,                                   # Size of axis labels
+              cex.axis = 1,                                  # Size of the tick mark labels
+              cex.main = 2)                                  # Size of the plot title
+    }
+  }
+  
+  output$distBoxplot <- renderPlot({
+    print(plotInputGSMboxplot())
+  })
   
   # ---------------------------------------------------------------------
   # Load NCBI
