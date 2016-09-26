@@ -397,15 +397,15 @@ shinyServer(function(input, output, session) {
     destdir = file.path(gb_Rdir, 'BD')
     
     gsm=CouchAGEO(input$gsmbinsplot)
-    ExperimentNCBI <- getGEO(gsm$header$geo_accession, destdir = destdir)
+    # ExperimentNCBI <- getGEO(gsm$header$geo_accession, destdir = destdir)
     
     cols <- c("VALUE")
-    Value <- Table(ExperimentNCBI)[,cols]
+    Value <- Table(gsm)[,cols]
     bins <- seq(min(as.double(Value)), max(as.double(Value)), length.out = input$bins + 1)
     
     # draw the histogram with the specified number of bins
     hist(as.double(Value), breaks = bins, col = 'red', border = 'white',
-         main = paste(gsm$header$geo_accession," values"), labels = TRUE)
+         main = paste(Meta(gsm)$geo_accession," values"), labels = TRUE)
   }
   
   output$distPlot <- renderPlot({
