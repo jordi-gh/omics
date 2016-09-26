@@ -250,6 +250,19 @@ shinyServer(function(input, output, session) {
                                   plotOutput("distBoxplot")
                                 )
                               )
+                     ),
+                     tabPanel("GSM scatterplot", id = "gsmscatterplot",
+                              sidebarLayout(
+                                sidebarPanel(
+                                  uiOutput("choose_gsm_scatterplot")
+                                ),
+                                
+                                # Show a plot of the generated distribution
+                                mainPanel(
+                                  tags$div(class = "waiting", p("Progress.."), img(src="img/loader.gif")),
+                                  plotOutput("distScatterplot")
+                                )
+                              )
                      )
                    )
           ),
@@ -454,11 +467,7 @@ shinyServer(function(input, output, session) {
 
       cols <- c("VALUE")
       Value <- Table(gsm)[,cols]
-      # bins <- seq(min(as.double(Value)), max(as.double(Value)), length.out = input$bins + 1)
-      # 
-      # # draw the histogram with the specified number of bins
-      # hist(as.double(Value), breaks = bins, col = 'red', border = 'white',
-      #      main = paste(Meta(gsm)$geo_accession," values"), labels = TRUE)
+      
       boxplot(as.double(Value),                              # x variable, y variable
               notch = T,                                     # Draw notch
               las = 1,                                       # Orientate the axis tick labels
@@ -473,6 +482,49 @@ shinyServer(function(input, output, session) {
   
   output$distBoxplot <- renderPlot({
     print(plotInputGSMboxplot())
+  })
+  
+  # ---------------------------------------------------------------------  
+  # Analisis4: GSM Scatterplot
+  # --------------------------------------------------------------------- 
+  output$choose_gsm_scatterplot <- renderUI({
+    
+    # Se seleccionan todos los ficheros gsm de NCBI y los de ICO de tipo gsm pero que el 
+    # grupo de trabajo del usuario tenga permisos sobre ellos y que hayan sido compartidos con el grupo
+    # de este usuario
+    res <- myXfiles(db, USERPROFILE$Profile$username,'gsm')
+    
+    if (nrow(res)>0){
+      selectizeInput("gsmscatterplot", "Select GSM", choices = c("Select GSM",split(res$uid,res$name))) 
+    } else {
+      selectizeInput("gsmscatterplot", "Select GSM", c('No GSM Data',""))
+    }
+    
+  })
+  
+  plotInputGSMscatterplot <- function(){
+    if (input$gsmscatterplot!="Select GSM" && input$gsmscatterplot!=""){
+      destdir = file.path(gb_Rdir, 'BD')
+      
+      gsm=CouchAGEO(input$gsmscatterplot)
+      # ExperimentNCBI <- getGEO(gsm$header$geo_accession, destdir = destdir)
+      
+      cols <- c("VALUE")
+      Value <- Table(gsm)[,cols]
+      
+      cols <- c("ABS_CALL")
+      ABSCALL <- Table(gsm)[,cols]
+      
+      plot(as.double(Value), col = ABSCALL, pch = 16, cex = 2)
+      legend(4.5, 7,
+             legend = c("P","A","M"),
+             col = c(1:3),
+             lty = "solid")
+    }
+  }
+  
+  output$distScatterplot <- renderPlot({
+    print(plotInputGSMscatterplot())
   })
   
   # ---------------------------------------------------------------------
